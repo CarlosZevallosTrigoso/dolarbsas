@@ -108,9 +108,9 @@
   .card .pen small{font-weight:400; color:var(--ink-dim); font-size:10px}
   .card .pen.off{color:var(--ink-dim); font-weight:400; font-size:11px}
   .card .rate{margin-top:8px; font-size:10.5px; color:var(--ink-dim)}
-  /* modo cambiar: una sola tarjeta a lo ancho, filo verde del blue */
-  .card.single{border-top:3px solid var(--musgo)}
-  .card.single .amount{font-size:34px}
+  /* modo cambiar: columna soles, borde neutro y algo atenuada */
+  .card.side{border-top-color:var(--ink-dim)}
+  .card.side .amount{font-size:24px}
   .hide{display:none}
   /* la que conviene: marco negro más grueso + filo de color, sin relleno */
   .card.best{border:2px solid #000}
@@ -231,12 +231,19 @@
     <div class="hint" id="amt-hint"></div>
   </div>
 
-  <!-- MODO CAMBIAR: un solo resultado, pesos a blue compra -->
+  <!-- MODO CAMBIAR: pesos que recibís (izq) + valor en soles de esos dólares (der) -->
   <div id="mode-cambio" aria-live="polite">
-    <div class="card single">
-      <div class="eyebrow"><span class="method">Recibís en cueva</span><span class="how">dólar blue</span></div>
-      <div class="amount" id="cambio-out"><span class="cur">$</span>—</div>
-      <div class="rate" id="cambio-rate"></div>
+    <div class="results">
+      <div class="card efectivo">
+        <div class="eyebrow"><span class="method">Recibís en cueva</span><span class="how">dólar blue</span></div>
+        <div class="amount" id="cambio-out"><span class="cur">$</span>—</div>
+        <div class="rate" id="cambio-rate"></div>
+      </div>
+      <div class="card side">
+        <div class="eyebrow"><span class="method">Eso vale</span><span class="how">a mercado</span></div>
+        <div class="amount" id="cambio-pen"><span class="cur">S/</span>—</div>
+        <div class="rate" id="cambio-pen-rate"></div>
+      </div>
     </div>
   </div>
 
@@ -520,6 +527,15 @@ function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es
       var pesos = has ? usdToArs(amount, r.cash) : NaN;
       $('cambio-out').innerHTML = '<span class="cur">$</span>'+(valid(pesos)?fmtArs(pesos):'—');
       $('cambio-rate').textContent = '1 US$ = $'+fmtRate(r.cash)+' · blue compra';
+      // valor en soles de esos dólares (mercado)
+      if(!valid(state.pen)){
+        $('cambio-pen').innerHTML = '<span class="cur">S/</span>—';
+        $('cambio-pen-rate').textContent = 'soles: sin dato';
+      }else{
+        var soles = has ? usdToPen(amount, state.pen) : NaN;
+        $('cambio-pen').innerHTML = '<span class="cur">S/</span>'+(valid(soles)?fmtPen(soles):'—');
+        $('cambio-pen-rate').textContent = '1 US$ = S/ '+fmtPen(state.pen)+(state.penOffline?' · sin conexión':'')+' · mercado';
+      }
     } else {
       $('amt-label').textContent='Precio en pesos';
       $('amt-unit').textContent='$';
