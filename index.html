@@ -143,6 +143,23 @@
   details.how .inner b{color:var(--musgo-deep)}
   details.how .inner .t{color:var(--steel-deep)}
 
+  /* chequeo de cueva */
+  details.cueva{margin-top:12px}
+  .cueva-row{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap}
+  .cueva-in{display:flex; flex-direction:column; gap:5px; flex:1; min-width:150px}
+  .cueva-in span{font-size:10.5px; color:var(--ink-dim)}
+  .cueva-in input{
+    border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:16px; font-weight:600; padding:9px 11px;
+  }
+  .cueva-in input:focus{outline:0; border-color:var(--musgo)}
+  .cueva-out{font-size:14px; font-weight:700; padding-bottom:4px; min-width:120px}
+  .cueva-out.bueno{color:var(--musgo-deep)}
+  .cueva-out.aceptable{color:var(--ink)}
+  .cueva-out.bajo{color:var(--warm-deep)}
+  .cueva-out .pct{font-variant-numeric:tabular-nums}
+  .cueva-note{font-size:10.5px; color:var(--ink-dim); margin:10px 0 0; line-height:1.55}
+
   /* ---- solo desktop ---- */
   .desk{display:none}
   @media (min-width:760px){ .desk{display:block} }
@@ -248,6 +265,18 @@
         <div class="rate" id="cambio-pen-rate"></div>
       </div>
     </div>
+
+    <details class="how cueva">
+      <summary>¿Te ofrecen un cambio? Verificá si es justo</summary>
+      <div class="inner">
+        <div class="cueva-row">
+          <label class="cueva-in"><span>Me ofrecen (pesos por dólar)</span>
+            <input id="cueva-offer" type="text" inputmode="decimal" autocomplete="off" placeholder="1450"></label>
+          <div class="cueva-out" id="cueva-out">—</div>
+        </div>
+        <p class="cueva-note" id="cueva-note">Se compara con el blue compra de hoy (lo que el mercado paga por tus dólares). Los niveles son una guía, no una regla.</p>
+      </div>
+    </details>
   </div>
 
   <!-- MODO PAGAR: comparar cómo pagar un precio en pesos -->
@@ -382,6 +411,8 @@ function penRateFrom(json){
   var rates=json.rates; if(!rates||typeof rates!=='object') return NaN;
   var p=num(rates.PEN); return valid(p)&&p>0?p:NaN;
 }
+function cuevaPct(offer,ref){ var o=num(offer),r=num(ref); if(!valid(o)||!valid(r)||r<=0||o<=0) return NaN; return ((o-r)/r)*100; }
+function cuevaNivel(pct){ var p=num(pct); if(!valid(p)) return null; if(p>=-0.5) return 'bueno'; if(p>=-3) return 'aceptable'; return 'bajo'; }
 function num(x){
   if(typeof x==='number') return x;
   if(typeof x==='string'){ var s=x.trim().replace(/\s+/g,'').replace(',','.'); if(s==='') return NaN; return Number(s); }
@@ -407,7 +438,7 @@ function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es
 
   var $=function(id){ return document.getElementById(id); };
   var state={ blue:null, bolsa:null, offline:false, errored:false, k:DEFAULT_CARD_K, pen:null, penUpdated:null, penOffline:false };
-  var mode='cambio'; // 'cambio' = cambiar dólares ; 'pagar' = pagar algo
+  var mode='pagar'; // default: pagar (el cambio de dólares es ocasional)
 
   /* --- almacenamiento (protegido: puede fallar en modo privado / sandbox) --- */
   function store(get, key, val){
@@ -556,9 +587,15 @@ function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es
 
     renderRatesTable(r);
     renderCalib(r);
+    renderCueva();
 
-    if(raw.trim()!=='' && !has) $('amt-hint').textContent='Ingresá un número válido.';
-    else $('amt-hint').textContent='';
+    if(raw.trim()!=='' && !has){ $('amt-hint').textContent='Ingresá un número válido.'; }
+    else if(has){
+      var echo = mode==='pagar' ? '$'+fmtArs(amount)
+               : 'US$ '+new Intl.NumberFormat('es-AR',{maximumFractionDigits:2}).format(amount);
+      $('amt-hint').textContent='leído como: '+echo;
+    }
+    else { $('amt-hint').textContent=''; }
   }
 
   function fillUsd(which, val){
@@ -647,7 +684,26 @@ function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es
   $('btn-cambio').addEventListener('click', function(){ setMode('cambio'); });
   $('btn-pagar').addEventListener('click', function(){ setMode('pagar'); });
   $('amt').addEventListener('input', render);
+  $('amt').addEventListener('focus', function(){ this.select(); });
   $('brand').addEventListener('click', function(e){ e.preventDefault(); location.reload(); });
+
+  // chequeo de cueva
+  function renderCueva(){
+    var out=$('cueva-out'); if(!out) return;
+    var raw=$('cueva-offer').value;
+    if(raw.trim()===''){ out.className='cueva-out'; out.textContent='—'; return; }
+    var offer=num(raw);
+    if(!state.blue || !valid(cashRateFrom(state.blue))){ out.className='cueva-out'; out.textContent='esperá cotización'; return; }
+    var ref=cashRateFrom(state.blue);
+    var pct=cuevaPct(offer, ref);
+    if(!valid(pct)){ out.className='cueva-out'; out.textContent='ingresá un número'; return; }
+    var nivel=cuevaNivel(pct);
+    var signo=pct>=0?'+':'';
+    var etiqueta = nivel==='bueno'?'buena oferta' : nivel==='aceptable'?'aceptable' : 'te están clavando';
+    out.className='cueva-out '+nivel;
+    out.innerHTML='<span class="pct">'+signo+pct.toFixed(1)+'%</span> vs blue · '+etiqueta;
+  }
+  $('cueva-offer').addEventListener('input', renderCueva);
 
   $('cal-apply').addEventListener('click', function(){
     if(!state.bolsa){ calMsg('Esperá a que carguen las cotizaciones.', false); return; }
@@ -679,6 +735,8 @@ function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es
   if(cached && cached.blue && cached.bolsa){ state.blue=cached.blue; state.bolsa=cached.bolsa; state.offline=true; }
   var pcache=loadPenCache();
   if(pcache && valid(num(pcache.rate))){ state.pen=num(pcache.rate); state.penUpdated=pcache.updated||null; state.penOffline=true; }
+  $('btn-cambio').setAttribute('aria-pressed', mode==='cambio'?'true':'false');
+  $('btn-pagar').setAttribute('aria-pressed', mode==='pagar'?'true':'false');
   render();
   fetchRates();
   fetchPen();
