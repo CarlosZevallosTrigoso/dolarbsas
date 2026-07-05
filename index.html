@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CAMBISTA · pesos y dólares en Buenos Aires</title>
+<title>Dólares/Pesos · Buenos Aires</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,8 +39,11 @@
     gap:12px; flex-wrap:wrap; margin-bottom:4px;
   }
   header.top h1{
-    margin:0; font-size:15px; font-weight:700; letter-spacing:.22em; color:var(--ink);
+    margin:0; font-size:15px; font-weight:700; letter-spacing:.12em; color:var(--ink);
   }
+  header.top h1 a{color:inherit; text-decoration:none; cursor:pointer}
+  header.top h1 a:hover{color:var(--steel)}
+  header.top h1 a:focus-visible{outline:2px solid var(--steel); outline-offset:3px}
   header.top .sub{color:var(--ink-dim); font-size:11px; letter-spacing:.02em}
 
   /* franja de frescura */
@@ -206,7 +209,7 @@
 <div class="wrap">
 
   <header class="top">
-    <h1>CAMBISTA</h1>
+    <h1><a id="brand" href="." aria-label="Dólares/Pesos — recargar">Dólares/Pesos</a></h1>
     <span class="sub">pesos y dólares · Buenos Aires</span>
   </header>
 
@@ -644,6 +647,7 @@ function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es
   $('btn-cambio').addEventListener('click', function(){ setMode('cambio'); });
   $('btn-pagar').addEventListener('click', function(){ setMode('pagar'); });
   $('amt').addEventListener('input', render);
+  $('brand').addEventListener('click', function(e){ e.preventDefault(); location.reload(); });
 
   $('cal-apply').addEventListener('click', function(){
     if(!state.bolsa){ calMsg('Esperá a que carguen las cotizaciones.', false); return; }
