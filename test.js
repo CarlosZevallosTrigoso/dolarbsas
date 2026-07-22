@@ -65,6 +65,11 @@ close(C.commissionToK(3),1/1.03,1e-9,'comisión 3%');
 ok(isNaN(C.commissionToK('x')),'comisión inválida');
 
 /* --- cueva --- */
+close(C.rateFromExchange(145000,100),1450,1e-9,'tasa desde cambio');
+close(C.rateFromExchange(143550,100),1435.5,1e-9,'tasa desde cambio decimal');
+ok(isNaN(C.rateFromExchange(145000,0)),'tasa cambio usd cero');
+ok(isNaN(C.rateFromExchange(0,100)),'tasa cambio pesos cero');
+ok(isNaN(C.rateFromExchange('x',100)),'tasa cambio inválida');
 close(C.cuevaPct(1450,1450),0,1e-9,'cueva 0%');
 close(C.cuevaPct(1435.5,1450),-1,1e-6,'cueva -1%');
 eq(C.cuevaNivel(0),'bueno','nivel bueno');

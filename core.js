@@ -74,6 +74,7 @@ function penRateFrom(json){
   var p=num(rates.PEN); return valid(p)&&p>0?p:NaN;
 }
 
+function rateFromExchange(pesos,usd){ var p=num(pesos),u=num(usd); if(!valid(p)||!valid(u)||p<=0||u<=0) return NaN; return p/u; }
 function cuevaPct(offer,ref){ var o=num(offer),r=num(ref); if(!valid(o)||!valid(r)||r<=0||o<=0) return NaN; return ((o-r)/r)*100; }
 function cuevaNivel(pct){ var p=num(pct); if(!valid(p)) return null; if(p>=-0.5) return 'bueno'; if(p>=-3) return 'aceptable'; return 'bajo'; }
 
@@ -146,7 +147,7 @@ if(typeof module!=='undefined' && module.exports){
     ageHours:ageHours, isStale:isStale, lastBusinessDayStart:lastBusinessDayStart, isStaleMarket:isStaleMarket,
     deriveK:deriveK, commissionToK:commissionToK,
     usdToPen:usdToPen, penRateFrom:penRateFrom,
-    cuevaPct:cuevaPct, cuevaNivel:cuevaNivel,
+    rateFromExchange:rateFromExchange, cuevaPct:cuevaPct, cuevaNivel:cuevaNivel,
     num:num, valid:valid,
     buildEntry:buildEntry, logTotals:logTotals
   };

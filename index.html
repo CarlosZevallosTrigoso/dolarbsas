@@ -162,6 +162,8 @@
   .cueva-out.bajo{color:var(--warm-deep)}
   .cueva-out .pct{font-variant-numeric:tabular-nums}
   .cueva-note{font-size:10.5px; color:var(--ink-dim); margin:10px 0 0; line-height:1.55}
+  .cueva-sep{display:flex; align-items:center; gap:10px; margin:16px 0 4px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-dim)}
+  .cueva-sep::before,.cueva-sep::after{content:''; flex:1; height:1px; background:var(--line)}
 
   /* ---- solo desktop ---- */
   .desk{display:none}
@@ -336,6 +338,17 @@
           <div class="cueva-out" id="cueva-out">—</div>
         </div>
         <p class="cueva-note" id="cueva-note">Se compara con el blue compra de hoy (lo que el mercado paga por tus dólares). Los niveles son una guía, no una regla.</p>
+
+        <div class="cueva-sep">o ya cambiaste</div>
+
+        <div class="cueva-row">
+          <label class="cueva-in"><span>Dólares que cambié</span>
+            <input id="ya-usd" type="text" inputmode="decimal" autocomplete="off" placeholder="100"></label>
+          <label class="cueva-in"><span>Pesos que recibí</span>
+            <input id="ya-ars" type="text" inputmode="decimal" autocomplete="off" placeholder="145000"></label>
+          <div class="cueva-out" id="ya-out">—</div>
+        </div>
+        <p class="cueva-note">A cuánto te cotizaron de verdad: los pesos que te dieron dividido por los dólares que entregaste, comparado con el blue compra de hoy.</p>
       </div>
     </details>
   </div>
@@ -651,6 +664,7 @@
     renderRatesTable(r);
     renderCalib(r);
     renderCueva();
+    renderYaCambiaste();
 
     if(raw.trim()!=='' && !has){ $('amt-hint').textContent='Ingresá un número válido.'; }
     else if(has){
@@ -767,6 +781,30 @@
     out.innerHTML='<span class="pct">'+signo+pct.toFixed(1)+'%</span> vs blue · '+etiqueta;
   }
   $('cueva-offer').addEventListener('input', renderCueva);
+
+  // a cuánto me cotizaron: pesos recibidos ÷ dólares cambiados
+  function renderYaCambiaste(){
+    var out=$('ya-out'); if(!out) return;
+    var rawUsd=$('ya-usd').value, rawArs=$('ya-ars').value;
+    if(rawUsd.trim()==='' || rawArs.trim()===''){ out.className='cueva-out'; out.textContent='—'; return; }
+    var tasa=rateFromExchange(rawArs, rawUsd);
+    if(!valid(tasa)){ out.className='cueva-out'; out.textContent='ingresá montos'; return; }
+    if(!state.blue || !valid(cashRateFrom(state.blue))){
+      out.className='cueva-out';
+      out.innerHTML='<span class="pct">$'+fmtRate(tasa)+'</span> por dólar';
+      return;
+    }
+    var ref=cashRateFrom(state.blue);
+    var pct=cuevaPct(tasa, ref);
+    if(!valid(pct)){ out.className='cueva-out'; out.textContent='—'; return; }
+    var nivel=cuevaNivel(pct);
+    var signo=pct>=0?'+':'';
+    var etiqueta = nivel==='bueno'?'buen cambio' : nivel==='aceptable'?'aceptable' : 'te clavaron';
+    out.className='cueva-out '+nivel;
+    out.innerHTML='<span class="pct">$'+fmtRate(tasa)+'</span> · '+signo+pct.toFixed(1)+'% vs blue · '+etiqueta;
+  }
+  $('ya-usd').addEventListener('input', renderYaCambiaste);
+  $('ya-ars').addEventListener('input', renderYaCambiaste);
 
   $('cal-apply').addEventListener('click', function(){
     if(!state.bolsa){ calMsg('Esperá a que carguen las cotizaciones.', false); return; }
