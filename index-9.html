@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Dólares/Pesos · Buenos Aires</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;            /* fondo: blanco siempre */
+    --paper:#ffffff;         /* superficies también blancas; estructura por línea negra */
+    --paper-2:#ffffff;
+    --ink:#000000;           /* texto: negro */
+    --ink-dim:#555555;       /* única concesión de gris, para leyendas mínimas */
+    --line:#000000;          /* hairlines negras (De Stijl) */
+    --musgo:#00ff00;         /* EFECTIVO — verde puro, SOLO como bloque/borde/relleno */
+    --musgo-deep:#000000;    /* etiquetas de efectivo en negro (verde-texto sería ilegible) */
+    --steel:#0000ff;         /* TARJETA — azul puro */
+    --steel-deep:#0000ff;    /* azul-texto sí es legible sobre blanco (~8:1) */
+    --warm:#ff0000;          /* rojo puro — dot/aviso */
+    --warm-deep:#ff0000;     /* rojo-texto solo en piezas breves y en negrita */
+    --mono:'Fira Code', ui-monospace, "SF Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:13px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:20px 16px 48px;
+  }
+  .wrap{max-width:900px; margin:0 auto}
+
+  /* ---- encabezado ---- */
+  header.top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:12px; flex-wrap:wrap; margin-bottom:4px;
+  }
+  header.top h1{
+    margin:0; font-size:15px; font-weight:700; letter-spacing:.12em; color:var(--ink);
+  }
+  header.top h1 a{color:inherit; text-decoration:none; cursor:pointer}
+  header.top h1 a:hover{color:var(--steel)}
+  header.top h1 a:focus-visible{outline:2px solid var(--steel); outline-offset:3px}
+  header.top .sub{color:var(--ink-dim); font-size:11px; letter-spacing:.02em}
+
+  /* franja de frescura */
+  #fresh{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    margin:10px 0 22px; padding:7px 10px; border:1px solid var(--line);
+    border-radius:3px; background:var(--paper); color:var(--ink-dim); font-size:11px;
+  }
+  #fresh .dot{width:7px; height:7px; border-radius:50%; background:var(--musgo); flex:none}
+  #fresh.stale .dot, #fresh.offline .dot{background:var(--warm)}
+  #fresh b{color:var(--ink); font-weight:600}
+  #fresh .tag{
+    margin-left:auto; text-transform:uppercase; letter-spacing:.08em; font-size:10px;
+    color:var(--musgo-deep);
+  }
+  #fresh.stale .tag, #fresh.offline .tag{color:var(--warm-deep)}
+
+  /* ---- control de dirección ---- */
+  .switch{display:flex; border:1px solid var(--line); border-radius:3px; overflow:hidden; margin-bottom:14px}
+  .switch button{
+    flex:1; appearance:none; border:0; background:var(--bg); color:var(--ink-dim);
+    font-family:var(--mono); font-size:12px; padding:11px 10px; cursor:pointer;
+    letter-spacing:.02em; transition:background .12s,color .12s;
+  }
+  .switch button + button{border-left:1px solid var(--line)}
+  .switch button[aria-pressed="true"]{background:var(--ink); color:#fff; font-weight:600}
+  .switch button:focus-visible{outline:2px solid var(--steel); outline-offset:-2px}
+
+  /* ---- entrada ---- */
+  .field{margin-bottom:22px}
+  .field label{display:block; color:var(--ink-dim); font-size:11px; margin-bottom:6px; letter-spacing:.03em}
+  .inputline{display:flex; align-items:stretch; border:1px solid var(--line); border-radius:3px; background:var(--bg)}
+  .inputline .unit{
+    display:flex; align-items:center; padding:0 14px; background:var(--paper);
+    border-right:1px solid var(--line); color:var(--ink); font-weight:600; font-size:14px;
+    min-width:58px; justify-content:center;
+  }
+  .inputline input{
+    flex:1; min-width:0; border:0; background:transparent; color:var(--ink);
+    font-family:var(--mono); font-size:26px; font-weight:600; padding:12px 14px; letter-spacing:.01em;
+  }
+  .inputline input:focus{outline:0}
+  .inputline:focus-within{border-color:var(--steel)}
+  .field .hint{color:var(--ink-dim); font-size:10.5px; margin-top:6px; min-height:13px}
+
+  /* ---- resultados (la firma: EFECTIVO vs TARJETA) ---- */
+  .results{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .card{
+    border:1px solid var(--line); border-top-width:3px; border-radius:3px;
+    padding:14px 14px 16px; background:var(--paper);
+  }
+  .card.efectivo{border-top-color:var(--musgo)}
+  .card.tarjeta{border-top-color:var(--steel)}
+  .card .eyebrow{
+    display:flex; align-items:center; gap:7px; font-size:10.5px; letter-spacing:.12em;
+    text-transform:uppercase; margin-bottom:9px;
+  }
+  .card.efectivo .eyebrow{color:var(--musgo-deep)}
+  .card.tarjeta .eyebrow{color:var(--steel-deep)}
+  .card .eyebrow .method{font-weight:700}
+  .card .eyebrow .how{color:var(--ink-dim); letter-spacing:.02em; text-transform:none; font-size:10px}
+  .card .amount{font-size:29px; font-weight:700; letter-spacing:.005em; line-height:1.15; word-break:break-word}
+  .card .amount .cur{font-size:14px; font-weight:500; color:var(--ink-dim); margin-right:4px}
+  .card .pen{margin-top:5px; font-size:13px; font-weight:600; color:var(--ink)}
+  .card .pen small{font-weight:400; color:var(--ink-dim); font-size:10px}
+  .card .pen.off{color:var(--ink-dim); font-weight:400; font-size:11px}
+  .card .rate{margin-top:8px; font-size:10.5px; color:var(--ink-dim)}
+  /* modo cambiar: columna soles, borde neutro y algo atenuada */
+  .card.side{border-top-color:var(--ink-dim)}
+  .card.side .amount{font-size:24px}
+  .hide{display:none}
+  /* la que conviene: marco negro más grueso + filo de color, sin relleno */
+  .card.best{border:2px solid #000}
+  .card.efectivo.best{border-top:5px solid var(--musgo)}
+  .card.tarjeta.best{border-top:5px solid var(--steel)}
+
+  /* veredicto */
+  #verdict{
+    margin:14px 0 0; padding:12px 14px; border:1px solid var(--line); border-radius:3px;
+    background:var(--paper-2); font-size:12.5px; display:flex; gap:10px; align-items:baseline;
+  }
+  #verdict .lead{color:var(--warm-deep); font-weight:700; font-size:14px; letter-spacing:.02em}
+  #verdict .body{color:var(--ink)}
+  #verdict.muted{color:var(--ink-dim)}
+  #verdict.muted .lead{color:var(--ink-dim)}
+
+  /* ---- desglose plegable (todos los dispositivos) ---- */
+  details.how{margin-top:18px; border:1px solid var(--line); border-radius:3px; background:var(--bg)}
+  details.how summary{
+    cursor:pointer; padding:11px 14px; font-size:11px; color:var(--ink-dim);
+    letter-spacing:.04em; list-style:none;
+  }
+  details.how summary::-webkit-details-marker{display:none}
+  details.how summary::before{content:'+ '; color:var(--steel)}
+  details.how[open] summary::before{content:'– '}
+  details.how .inner{padding:2px 14px 14px; font-size:11.5px; color:var(--ink); line-height:1.65}
+  details.how .inner b{color:var(--musgo-deep)}
+  details.how .inner .t{color:var(--steel-deep)}
+
+  /* chequeo de cueva */
+  details.cueva{margin-top:12px}
+  .cueva-row{display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap}
+  .cueva-in{display:flex; flex-direction:column; gap:5px; flex:1; min-width:150px}
+  .cueva-in span{font-size:10.5px; color:var(--ink-dim)}
+  .cueva-in input{
+    border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:16px; font-weight:600; padding:9px 11px;
+  }
+  .cueva-in input:focus{outline:0; border-color:var(--musgo)}
+  .cueva-out{font-size:14px; font-weight:700; padding-bottom:4px; min-width:120px}
+  .cueva-out.bueno{color:var(--musgo-deep)}
+  .cueva-out.aceptable{color:var(--ink)}
+  .cueva-out.bajo{color:var(--warm-deep)}
+  .cueva-out .pct{font-variant-numeric:tabular-nums}
+  .cueva-note{font-size:10.5px; color:var(--ink-dim); margin:10px 0 0; line-height:1.55}
+
+  /* ---- solo desktop ---- */
+  .desk{display:none}
+  @media (min-width:760px){ .desk{display:block} }
+
+  .panel{margin-top:18px; border:1px solid var(--line); border-radius:3px; background:var(--bg)}
+  .panel > h2{
+    margin:0; padding:12px 16px; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-dim); border-bottom:1px solid var(--line); font-weight:600;
+  }
+  .panel .pad{padding:14px 16px}
+
+  /* tabla de cotizaciones */
+  table.rates{width:100%; border-collapse:collapse; font-size:12px}
+  table.rates th, table.rates td{text-align:right; padding:7px 8px; border-bottom:1px solid var(--line)}
+  table.rates th{color:var(--ink-dim); font-weight:500; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase}
+  table.rates td:first-child, table.rates th:first-child{text-align:left}
+  table.rates .name{color:var(--ink); font-weight:600}
+  table.rates .name small{display:block; color:var(--ink-dim); font-weight:400; font-size:10px; letter-spacing:0}
+  table.rates .num{font-variant-numeric:tabular-nums}
+  table.rates tr.derived td{border-top:2px solid #000; font-weight:600}
+  table.rates .swatch{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; vertical-align:baseline}
+  .sw-musgo{background:var(--musgo)} .sw-steel{background:var(--steel)}
+
+  /* calibración */
+  .calib .lead{font-size:12px; color:var(--ink); margin:0 0 4px}
+  .calib .now{
+    font-size:12px; color:var(--ink); background:var(--paper); border:1px solid var(--line);
+    border-radius:3px; padding:9px 11px; margin:0 0 14px; font-variant-numeric:tabular-nums;
+  }
+  .calib .now b{color:var(--steel-deep)}
+  .calib .grp{margin-bottom:14px}
+  .calib .grp > .cap{font-size:10.5px; color:var(--ink-dim); letter-spacing:.05em; text-transform:uppercase; margin-bottom:7px}
+  .calib .fields{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end}
+  .calib .mini{display:flex; flex-direction:column; gap:4px}
+  .calib .mini span{font-size:10px; color:var(--ink-dim)}
+  .calib input[type=number]{
+    width:120px; border:1px solid var(--line); border-radius:3px; background:var(--bg);
+    color:var(--ink); font-family:var(--mono); font-size:14px; padding:8px 10px;
+  }
+  .calib input:focus{outline:0; border-color:var(--steel)}
+  .calib button{
+    appearance:none; border:1px solid var(--steel); background:var(--steel); color:#fff;
+    font-family:var(--mono); font-size:12px; padding:9px 14px; border-radius:3px; cursor:pointer;
+    letter-spacing:.02em;
+  }
+  .calib button.ghost{background:transparent; color:var(--steel-deep); border-color:var(--line)}
+  .calib button:focus-visible{outline:2px solid var(--steel); outline-offset:2px}
+  .calib .note{font-size:10.5px; color:var(--ink-dim); line-height:1.6; margin:10px 0 0}
+  .calib .msg{font-size:11px; margin-top:8px; min-height:14px; color:var(--musgo-deep)}
+
+  /* ---- registro de gastos ---- */
+  .btn{
+    appearance:none; font-family:var(--mono); font-size:11px; letter-spacing:.03em;
+    padding:9px 12px; border-radius:3px; cursor:pointer;
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+  }
+  .btn:hover{background:var(--ink); color:#fff}
+  .btn:focus-visible{outline:2px solid var(--steel); outline-offset:2px}
+  .btn.primary{background:var(--steel); border-color:var(--steel); color:#fff}
+  .btn.primary:hover{background:#000; border-color:#000}
+  .reg-row{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center}
+  #reg-ef{border-top:3px solid var(--musgo)}
+  #reg-ta{border-top:3px solid var(--steel)}
+  .reg-msg{font-size:10.5px; color:var(--musgo-deep); min-height:13px; margin-top:6px}
+  .reg-msg.err{color:var(--warm-deep)}
+  details.registro .inner{padding-top:10px}
+  .log-nota-row{display:flex; flex-direction:column; gap:5px; margin-bottom:12px}
+  .log-nota-row span{font-size:10.5px; color:var(--ink-dim)}
+  .log-nota-row input{
+    border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:13px; padding:8px 10px;
+  }
+  .log-nota-row input:focus{outline:0; border-color:var(--steel)}
+  .log-tot{font-size:11.5px; margin:0 0 10px; color:var(--ink)}
+  .log-tot b{font-variant-numeric:tabular-nums}
+  .log-list{border:1px solid var(--line); border-radius:3px; margin-bottom:12px}
+  .log-list .li{
+    display:flex; justify-content:space-between; gap:10px; padding:7px 10px;
+    border-bottom:1px solid var(--line); font-size:11px; flex-wrap:wrap;
+  }
+  .log-list .li:last-child{border-bottom:0}
+  .log-list .li .who{color:var(--ink)}
+  .log-list .li .who .m-ef{color:var(--musgo-deep); font-weight:700}
+  .log-list .li .who .m-ta{color:var(--steel-deep); font-weight:700}
+  .log-list .li .amt{font-variant-numeric:tabular-nums; color:var(--ink); font-weight:600}
+  .log-list .li small{color:var(--ink-dim)}
+  .log-empty{padding:10px; font-size:11px; color:var(--ink-dim); text-align:center}
+  .btnrow{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px}
+  .gh{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+  .gh .cap{font-size:10.5px; color:var(--ink-dim); letter-spacing:.05em; text-transform:uppercase; margin-bottom:8px}
+  .gh-grid{display:flex; flex-direction:column; gap:8px; margin-bottom:10px}
+  .gh-grid label{display:flex; flex-direction:column; gap:4px}
+  .gh-grid span{font-size:10px; color:var(--ink-dim)}
+  .gh-grid input{
+    border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:12px; padding:8px 10px;
+  }
+  .gh-grid input:focus{outline:0; border-color:var(--steel)}
+  .gh-note{font-size:10.5px; color:var(--ink-dim); line-height:1.55; margin:8px 0 0}
+  .gh-msg{font-size:11px; min-height:14px; margin-top:8px; color:var(--musgo-deep); word-break:break-all}
+  .gh-msg.err{color:var(--warm-deep)}
+  .gh-msg a{color:var(--steel-deep)}
+
+  footer.foot{margin-top:26px; color:var(--ink-dim); font-size:10.5px; line-height:1.6}
+  footer.foot a{color:var(--steel-deep)}
+
+  @media (prefers-reduced-motion: no-preference){
+    .card .amount{transition:color .1s}
+  }
+  @media (max-width:420px){
+    .inputline input{font-size:22px}
+    .card .amount{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1><a id="brand" href="." aria-label="Dólares/Pesos — recargar">Dólares/Pesos</a></h1>
+    <span class="sub">pesos y dólares · Buenos Aires</span>
+  </header>
+
+  <div id="fresh" aria-live="polite">
+    <span class="dot"></span>
+    <span id="fresh-txt">Cargando cotizaciones…</span>
+    <span class="tag" id="fresh-tag"></span>
+  </div>
+
+  <div class="switch" role="group" aria-label="Qué querés hacer">
+    <button id="btn-cambio" aria-pressed="true">Cambiar dólares</button>
+    <button id="btn-pagar" aria-pressed="false">Pagar algo</button>
+  </div>
+
+  <div class="field">
+    <label id="amt-label" for="amt">Cuántos dólares vas a cambiar</label>
+    <div class="inputline">
+      <span class="unit" id="amt-unit">US$</span>
+      <input id="amt" type="text" inputmode="decimal" autocomplete="off"
+             enterkeyhint="done" placeholder="0" aria-describedby="amt-hint">
+    </div>
+    <div class="hint" id="amt-hint"></div>
+  </div>
+
+  <!-- MODO CAMBIAR: pesos que recibís (izq) + valor en soles de esos dólares (der) -->
+  <div id="mode-cambio" aria-live="polite">
+    <div class="results">
+      <div class="card efectivo">
+        <div class="eyebrow"><span class="method">Recibís en cueva</span><span class="how">dólar blue</span></div>
+        <div class="amount" id="cambio-out"><span class="cur">$</span>—</div>
+        <div class="rate" id="cambio-rate"></div>
+      </div>
+      <div class="card side">
+        <div class="eyebrow"><span class="method">Eso vale</span><span class="how">a mercado</span></div>
+        <div class="amount" id="cambio-pen"><span class="cur">S/</span>—</div>
+        <div class="rate" id="cambio-pen-rate"></div>
+      </div>
+    </div>
+
+    <div class="reg-row">
+      <button id="reg-cambio" type="button" class="btn">registrar cambio</button>
+      <span class="reg-msg" id="reg-msg-cambio" aria-live="polite"></span>
+    </div>
+
+    <details class="how cueva">
+      <summary>¿Te ofrecen un cambio? Verificá si es justo</summary>
+      <div class="inner">
+        <div class="cueva-row">
+          <label class="cueva-in"><span>Me ofrecen (pesos por dólar)</span>
+            <input id="cueva-offer" type="text" inputmode="decimal" autocomplete="off" placeholder="1450"></label>
+          <div class="cueva-out" id="cueva-out">—</div>
+        </div>
+        <p class="cueva-note" id="cueva-note">Se compara con el blue compra de hoy (lo que el mercado paga por tus dólares). Los niveles son una guía, no una regla.</p>
+      </div>
+    </details>
+  </div>
+
+  <!-- MODO PAGAR: comparar cómo pagar un precio en pesos -->
+  <div id="mode-pagar" class="hide" aria-live="polite">
+    <div class="results">
+      <div class="card efectivo" id="card-ef">
+        <div class="eyebrow"><span class="method">Efectivo</span><span class="how">pesos en cueva</span></div>
+        <div class="amount" id="out-ef"><span class="cur">US$</span>—</div>
+        <div class="pen" id="pen-ef"></div>
+        <div class="rate" id="rate-ef"></div>
+      </div>
+      <div class="card tarjeta" id="card-ta">
+        <div class="eyebrow"><span class="method">Tarjeta</span><span class="how">débito BBVA</span></div>
+        <div class="amount" id="out-ta"><span class="cur">US$</span>—</div>
+        <div class="pen" id="pen-ta"></div>
+        <div class="rate" id="rate-ta"></div>
+      </div>
+    </div>
+    <div id="verdict" class="muted"><span class="lead">—</span><span class="body">Esperando cotizaciones.</span></div>
+    <div class="reg-row">
+      <button id="reg-ef" type="button" class="btn">pagué en efectivo</button>
+      <button id="reg-ta" type="button" class="btn">pagué con tarjeta</button>
+      <span class="reg-msg" id="reg-msg-pago" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <details class="how">
+    <summary>Cómo se calcula cada cifra</summary>
+    <div class="inner">
+      <p><b>Cambiar dólares</b>: usás el blue lado compra — lo que una cueva te paga al cambiar tus dólares por pesos.</p>
+      <p><b>Pagar · efectivo</b>: costo de gastar esos pesos, valuado al blue de hoy. Es una lectura de mercado en vivo, no necesariamente lo que te costaron cuando cambiaste.</p>
+      <p><span class="t">Pagar · tarjeta</span>: tarjeta emitida en el exterior en un POS toma el “dólar para turistas extranjeros”, cercano al MEP. Estimación = MEP × factor (calibrable con un consumo real, panel en pantalla ancha). No es el “dólar tarjeta” argentino (oficial + 30%): ese no aplica a tu tarjeta.</p>
+      <p><b>Soles</b>: el costo en USD convertido al USD/PEN de <b>mercado</b> (actualización diaria). Para la <span class="t">tarjeta</span> es una referencia: BBVA te factura a su propio cambio, con su spread encima.</p>
+    </div>
+  </details>
+
+  <details class="how registro" id="registro">
+    <summary>Registro de gastos <span id="log-count"></span></summary>
+    <div class="inner">
+      <label class="log-nota-row"><span>Nota para el próximo registro (opcional)</span>
+        <input id="log-nota" type="text" autocomplete="off" placeholder="cena en Chacarita, taxi, entrada…"></label>
+
+      <p class="log-tot" id="log-tot">Sin movimientos todavía.</p>
+      <div class="log-list" id="log-list"><div class="log-empty">Registrá un pago o un cambio y aparece acá.</div></div>
+
+      <div class="btnrow">
+        <button id="log-export" type="button" class="btn">exportar json</button>
+        <button id="log-undo" type="button" class="btn">borrar último</button>
+        <button id="log-clear" type="button" class="btn">vaciar todo</button>
+      </div>
+      <span class="reg-msg" id="log-msg" aria-live="polite"></span>
+
+      <div class="gh">
+        <div class="cap">Enviar a GitHub</div>
+        <div class="gh-grid">
+          <label><span>Repo (usuario/nombre — ideal privado)</span>
+            <input id="gh-repo" type="text" autocomplete="off" placeholder="CarlosZevallosTrigoso/gastos-bsas"></label>
+          <label><span>Carpeta destino</span>
+            <input id="gh-path" type="text" autocomplete="off" placeholder="gastos"></label>
+          <label><span>Token fine-grained (solo Contents: read &amp; write, solo ese repo)</span>
+            <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+        </div>
+        <div class="btnrow">
+          <button id="gh-send" type="button" class="btn primary">enviar registro al repo</button>
+        </div>
+        <div class="gh-msg" id="gh-msg" aria-live="polite"></div>
+        <p class="gh-note">Sube un snapshot fechado (<code>gastos/registro-AAAA-MM-DD-HHMMSS.json</code>) con todos los movimientos vía la API de GitHub, directo desde el navegador. Repo y carpeta se recuerdan acá; el token también, así que usá uno restringido a un solo repo privado y revocalo al volver del viaje.</p>
+      </div>
+    </div>
+  </details>
+
+  <!-- ===== solo desktop ===== -->
+  <div class="desk">
+
+    <section class="panel">
+      <h2>Cotizaciones de referencia</h2>
+      <div class="pad">
+        <table class="rates">
+          <thead>
+            <tr><th>Casa</th><th>Compra</th><th>Venta</th><th>Usada acá</th></tr>
+          </thead>
+          <tbody id="rates-body">
+            <tr><td colspan="4" style="text-align:center;color:var(--ink-dim)">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel calib">
+      <h2>Calibrar tarjeta BBVA</h2>
+      <div class="pad">
+        <p class="lead">La línea de tarjeta es una estimación hasta que la ajustes con un cobro real.</p>
+        <p class="now" id="calib-now">—</p>
+
+        <div class="grp">
+          <div class="cap">Opción A · con un consumo real</div>
+          <div class="fields">
+            <label class="mini"><span>Pesos que pagaste (ARS)</span>
+              <input id="cal-ars" type="number" inputmode="decimal" min="0" step="any" placeholder="300000"></label>
+            <label class="mini"><span>Lo que te costó (USD)</span>
+              <input id="cal-usd" type="number" inputmode="decimal" min="0" step="any" placeholder="205.50"></label>
+            <button id="cal-apply" type="button">Calibrar</button>
+          </div>
+        </div>
+
+        <div class="grp">
+          <div class="cap">Opción B · comisión conocida</div>
+          <div class="fields">
+            <label class="mini"><span>Comisión del banco (%)</span>
+              <input id="cal-com" type="number" inputmode="decimal" min="0" step="any" placeholder="3"></label>
+            <button id="cal-com-apply" type="button">Aplicar</button>
+            <button id="cal-reset" type="button" class="ghost">Volver a estimación</button>
+          </div>
+        </div>
+
+        <div class="msg" id="calib-msg" aria-live="polite"></div>
+        <p class="note">Tu débito BBVA factura en soles: para la opción A, convertí primero a dólares lo que te debitaron, o usá la opción B si conocés la comisión. El valor calibrado queda guardado en este navegador.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    Cotizaciones ARS: DolarApi.com (fuentes públicas). USD/PEN: <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>.
+    Se calcula todo en tu navegador; nada sale de tu equipo salvo que vos envíes el registro a tu repo de GitHub.
+    Las cotizaciones informales y de tarjeta varían; verificá antes de una operación grande.
+  </footer>
+
+</div>
+
+<script src="core.js"></script>
+<script>
+/* ============================================================
+   CAPA UI / RED
+   ============================================================ */
+(function(){
+  'use strict';
+  var API='https://dolarapi.com/v1/dolares';
+  var PEN_API='https://open.er-api.com/v6/latest/USD';
+  var STALE_HOURS=24;
+  var CACHE_KEY='cambista.cache.v1';
+  var CALIB_KEY='cambista.k.v1';
+  var PEN_CACHE_KEY='cambista.pen.v1';
+  var LOG_KEY='cambista.log.v1';
+  var GH_KEY='cambista.gh.v1';
+  var FETCH_TIMEOUT=8000;
+
+  var $=function(id){ return document.getElementById(id); };
+  var state={ blue:null, bolsa:null, offline:false, errored:false, k:DEFAULT_CARD_K, pen:null, penUpdated:null, penOffline:false };
+  var mode='pagar'; // default: pagar (el cambio de dólares es ocasional)
+
+  /* --- almacenamiento (protegido: puede fallar en modo privado / sandbox) --- */
+  function store(get, key, val){
+    try{
+      if(get) { var v=localStorage.getItem(key); return v==null?null:v; }
+      localStorage.setItem(key, val); return true;
+    }catch(e){ return null; }
+  }
+  function loadCalib(){
+    var raw=store(true, CALIB_KEY);
+    var k=num(raw);
+    state.k = valid(k) && k>0 ? k : DEFAULT_CARD_K;
+  }
+  function saveCalib(){ store(false, CALIB_KEY, String(state.k)); }
+  function loadCache(){
+    var raw=store(true, CACHE_KEY);
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+  function saveCache(){
+    if(!state.blue||!state.bolsa) return;
+    try{ store(false, CACHE_KEY, JSON.stringify({blue:state.blue, bolsa:state.bolsa})); }catch(e){}
+  }
+
+  /* --- red --- */
+  // fetch con timeout: si la API cuelga sin responder, abortamos a los 8s
+  // y degradamos a caché en vez de dejar "Cargando…" para siempre.
+  function fetchT(url, ms){
+    var opts={cache:'no-store'};
+    if(typeof AbortController==='undefined') return fetch(url, opts);
+    var ctl=new AbortController(); opts.signal=ctl.signal;
+    var t=setTimeout(function(){ ctl.abort(); }, ms||FETCH_TIMEOUT);
+    return fetch(url, opts).then(
+      function(r){ clearTimeout(t); return r; },
+      function(e){ clearTimeout(t); throw e; }
+    );
+  }
+
+  function fetchRates(){
+    fetchT(API)
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(arr){
+        if(!Array.isArray(arr)) throw new Error('respuesta inesperada');
+        var blue=find(arr,'blue'), bolsa=find(arr,'bolsa');
+        if(!blue||!bolsa) throw new Error('faltan cotizaciones');
+        if(!valid(num(blue.compra)) || !valid(mepRefFrom(bolsa))) throw new Error('valores no numéricos');
+        state.blue=blue; state.bolsa=bolsa; state.offline=false; state.errored=false;
+        saveCache(); render();
+      })
+      .catch(function(err){
+        // degradar a caché si existe; si no, estado de error explícito
+        var cached=loadCache();
+        if(cached && cached.blue && cached.bolsa){
+          state.blue=cached.blue; state.bolsa=cached.bolsa; state.offline=true; state.errored=false; render();
+        }else{
+          state.offline=true; state.errored=true; renderError(err);
+        }
+      });
+  }
+  function find(arr,casa){
+    for(var i=0;i<arr.length;i++){ if(arr[i] && arr[i].casa===casa) return arr[i]; }
+    return null;
+  }
+
+  /* --- red: soles (PEN), independiente; nunca bloquea el resto --- */
+  function loadPenCache(){
+    var raw=store(true, PEN_CACHE_KEY); if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+  function savePenCache(){
+    if(!valid(state.pen)) return;
+    try{ store(false, PEN_CACHE_KEY, JSON.stringify({rate:state.pen, updated:state.penUpdated})); }catch(e){}
+  }
+  function fetchPen(){
+    fetchT(PEN_API)
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(j){
+        var p=penRateFrom(j);
+        if(!valid(p)) throw new Error('sin PEN');
+        state.pen=p; state.penUpdated=j.time_last_update_utc||null; state.penOffline=false;
+        savePenCache(); render();
+      })
+      .catch(function(){
+        var c=loadPenCache();
+        if(c && valid(num(c.rate))){ state.pen=num(c.rate); state.penUpdated=c.updated||null; state.penOffline=true; }
+        else { state.pen=null; state.penOffline=true; }
+        render();
+      });
+  }
+
+  /* --- frescura --- */
+  function relAge(fecha){
+    var h=ageHours(fecha);
+    if(isNaN(h)) return 'fecha desconocida';
+    if(h<1) return 'hace '+Math.max(1,Math.round(h*60))+' min';
+    if(h<24) return 'hace '+Math.round(h)+' h';
+    var d=Math.round(h/24); return 'hace '+d+(d===1?' día':' días');
+  }
+  function renderFresh(){
+    var el=$('fresh'), txt=$('fresh-txt'), tag=$('fresh-tag');
+    if(!state.blue){
+      if(!state.errored){ el.classList.remove('stale','offline'); txt.textContent='Cargando cotizaciones…'; tag.textContent=''; }
+      return; // si errored, dejar lo que puso renderError
+    }
+    el.classList.remove('stale','offline');
+    var f=state.blue.fechaActualizacion;
+    // stale solo si es viejo Y anterior al último día hábil:
+    // el blue no cotiza el finde, así que el dato del viernes vale hasta el lunes.
+    var stale=isStale(f, STALE_HOURS) && isStaleMarket(f);
+    txt.innerHTML='Actualizado <b>'+relAge(f)+'</b>';
+    if(state.offline){ el.classList.add('offline'); tag.textContent='sin conexión · último dato'; }
+    else if(stale){ el.classList.add('stale'); tag.textContent='puede estar desactualizado'; }
+    else { tag.textContent='al día'; }
+  }
+
+  /* --- render principal --- */
+  function currentRates(){
+    return { cash: cashRateFrom(state.blue), card: cardRateFrom(state.bolsa, state.k) };
+  }
+
+  function render(){
+    renderFresh();
+    if(!state.blue||!state.bolsa) return;
+    var r=currentRates();
+    var raw=$('amt').value;
+    var amount=num(raw);
+    var has = raw.trim()!=='' && valid(amount) && amount>=0;
+
+    $('mode-cambio').classList.toggle('hide', mode!=='cambio');
+    $('mode-pagar').classList.toggle('hide', mode!=='pagar');
+
+    if(mode==='cambio'){
+      $('amt-label').textContent='Cuántos dólares vas a cambiar';
+      $('amt-unit').textContent='US$';
+      var pesos = has ? usdToArs(amount, r.cash) : NaN;
+      $('cambio-out').innerHTML = '<span class="cur">$</span>'+(valid(pesos)?fmtArs(pesos):'—');
+      $('cambio-rate').textContent = '1 US$ = $'+fmtRate(r.cash)+' · blue compra';
+      // valor en soles de esos dólares (mercado)
+      if(!valid(state.pen)){
+        $('cambio-pen').innerHTML = '<span class="cur">S/</span>—';
+        $('cambio-pen-rate').textContent = 'soles: sin dato';
+      }else{
+        var soles = has ? usdToPen(amount, state.pen) : NaN;
+        $('cambio-pen').innerHTML = '<span class="cur">S/</span>'+(valid(soles)?fmtPen(soles):'—');
+        $('cambio-pen-rate').textContent = '1 US$ = S/ '+fmtPen(state.pen)+(state.penOffline?' · sin conexión':'')+' · mercado';
+      }
+    } else {
+      $('amt-label').textContent='Precio en pesos';
+      $('amt-unit').textContent='$';
+      var usdEf = has ? arsToUsd(amount, r.cash) : NaN;
+      var usdTa = has ? arsToUsd(amount, r.card) : NaN;
+      fillUsd('ef', usdEf); fillUsd('ta', usdTa);
+      fillPen('ef', usdEf); fillPen('ta', usdTa);
+      $('rate-ef').textContent='1 US$ = $'+fmtRate(r.cash);
+      $('rate-ta').textContent='1 US$ ≈ $'+fmtRate(r.card);
+      var cmp=compareMethods(r.cash, r.card);
+      $('card-ef').classList.toggle('best', cmp.mejor==='efectivo');
+      $('card-ta').classList.toggle('best', cmp.mejor==='tarjeta');
+      renderVerdict(cmp, has, amount, r);
+    }
+
+    renderRatesTable(r);
+    renderCalib(r);
+    renderCueva();
+
+    if(raw.trim()!=='' && !has){ $('amt-hint').textContent='Ingresá un número válido.'; }
+    else if(has){
+      var echo = mode==='pagar' ? '$'+fmtArs(amount)
+               : 'US$ '+new Intl.NumberFormat('es-AR',{maximumFractionDigits:2}).format(amount);
+      $('amt-hint').textContent='leído como: '+echo;
+    }
+    else { $('amt-hint').textContent=''; }
+  }
+
+  function fillUsd(which, val){
+    $('out-'+which).innerHTML = '<span class="cur">US$</span>'+(valid(val)?fmtUsd(val):'—');
+  }
+  // soles bajo el costo en USD. Si no hay PEN, aviso discreto; nunca rompe la línea USD.
+  function fillPen(which, usdVal){
+    var el=$('pen-'+which); if(!el) return;
+    if(!valid(usdVal)){ el.className='pen'; el.textContent=''; return; }
+    if(!valid(state.pen)){ el.className='pen off'; el.textContent='soles: sin dato'; return; }
+    el.className='pen';
+    var marks = (which==='ta'?' <small>ref.</small>':'') + (state.penOffline?' <small>· sin conexión</small>':'');
+    el.innerHTML='S/ '+fmtPen(usdToPen(usdVal, state.pen))+marks;
+  }
+
+  function renderVerdict(cmp, has, amount, r){
+    var v=$('verdict'); v.classList.remove('muted');
+    if(!cmp || cmp.mejor===null){ v.classList.add('muted'); v.innerHTML='<span class="lead">—</span><span class="body">Sin datos suficientes.</span>'; return; }
+    if(cmp.mejor==='empate'){
+      v.innerHTML='<span class="lead">Igual</span><span class="body">Hoy efectivo y tarjeta cuestan casi lo mismo.</span>';
+      return;
+    }
+    var nombre = cmp.mejor==='efectivo' ? 'Efectivo' : 'Tarjeta';
+    var pct = cmp.ahorroPct.toFixed(1);
+    var body;
+    if(has && amount>0){
+      var ahorroUsd=Math.abs(arsToUsd(amount,r.cash)-arsToUsd(amount,r.card));
+      var enSoles = valid(state.pen) ? ' (S/ '+fmtPen(usdToPen(ahorroUsd, state.pen))+')' : '';
+      body='Pagando con '+nombre.toLowerCase()+' gastás US$'+fmtUsd(ahorroUsd)+enSoles+' menos ('+pct+'%).';
+    }else{
+      body='Cuesta '+pct+'% menos que la otra opción hoy.';
+    }
+    v.innerHTML='<span class="lead">Hoy conviene: '+nombre+'</span><span class="body">'+body+'</span>';
+  }
+
+  function renderError(err){
+    renderFresh();
+    $('fresh-txt').textContent='No se pudieron cargar las cotizaciones.';
+    $('fresh').classList.add('offline');
+    $('fresh-tag').textContent='sin datos';
+    $('verdict').classList.add('muted');
+    $('verdict').innerHTML='<span class="lead">Sin conexión</span><span class="body">Revisá tu internet y recargá. ('+String(err&&err.message||err)+')</span>';
+  }
+
+  /* --- tabla desktop --- */
+  function renderRatesTable(r){
+    var b=$('rates-body'); if(!b) return;
+    var blue=state.blue, bolsa=state.bolsa;
+    var rows='';
+    rows+=row('<span class="swatch sw-musgo"></span>Blue','<small>efectivo en cueva</small>', blue.compra, blue.venta, 'compra → efectivo', true);
+    rows+=row('<span class="swatch sw-steel"></span>MEP (bolsa)','<small>proxy de tarjeta</small>', bolsa.compra, bolsa.venta, 'medio → base tarjeta', false);
+    // fila derivada: tarjeta efectiva
+    rows+='<tr class="derived"><td class="name">Tarjeta efectiva<small>MEP × '+state.k.toFixed(3)+'</small></td>'
+        + '<td class="num">—</td><td class="num">—</td><td class="num">$'+fmtRate(r.card)+'</td></tr>';
+    b.innerHTML=rows;
+  }
+  function row(name, sub, compra, venta, uso, isCash){
+    return '<tr><td class="name">'+name+' '+sub+'</td>'
+      + '<td class="num">$'+fmtRate(num(compra))+'</td>'
+      + '<td class="num">$'+fmtRate(num(venta))+'</td>'
+      + '<td class="num" style="color:var(--ink-dim);font-size:10.5px">'+uso+'</td></tr>';
+  }
+
+  /* --- calibración desktop --- */
+  function renderCalib(r){
+    var now=$('calib-now'); if(!now) return;
+    var mep=mepRefFrom(state.bolsa);
+    var esDefault = Math.abs(state.k-DEFAULT_CARD_K)<1e-9;
+    now.innerHTML='Tarjeta ≈ MEP ($'+fmtRate(mep)+') × <b>'+state.k.toFixed(3)+'</b> = <b>$'+fmtRate(r.card)+'</b>'
+      + (esDefault?' &nbsp;· estimación sin calibrar':' &nbsp;· calibrado');
+  }
+
+  function calMsg(t, ok){
+    var m=$('calib-msg'); if(!m) return;
+    m.textContent=t; m.style.color = ok===false ? 'var(--warm-deep)' : 'var(--musgo-deep)';
+  }
+
+  /* --- eventos --- */
+  function setMode(m){
+    mode=m;
+    $('btn-cambio').setAttribute('aria-pressed', m==='cambio'?'true':'false');
+    $('btn-pagar').setAttribute('aria-pressed', m==='pagar'?'true':'false');
+    render();
+  }
+
+  $('btn-cambio').addEventListener('click', function(){ setMode('cambio'); });
+  $('btn-pagar').addEventListener('click', function(){ setMode('pagar'); });
+  $('amt').addEventListener('input', render);
+  $('amt').addEventListener('focus', function(){ this.select(); });
+  $('brand').addEventListener('click', function(e){ e.preventDefault(); location.reload(); });
+
+  // chequeo de cueva
+  function renderCueva(){
+    var out=$('cueva-out'); if(!out) return;
+    var raw=$('cueva-offer').value;
+    if(raw.trim()===''){ out.className='cueva-out'; out.textContent='—'; return; }
+    var offer=num(raw);
+    if(!state.blue || !valid(cashRateFrom(state.blue))){ out.className='cueva-out'; out.textContent='esperá cotización'; return; }
+    var ref=cashRateFrom(state.blue);
+    var pct=cuevaPct(offer, ref);
+    if(!valid(pct)){ out.className='cueva-out'; out.textContent='ingresá un número'; return; }
+    var nivel=cuevaNivel(pct);
+    var signo=pct>=0?'+':'';
+    var etiqueta = nivel==='bueno'?'buena oferta' : nivel==='aceptable'?'aceptable' : 'te están clavando';
+    out.className='cueva-out '+nivel;
+    out.innerHTML='<span class="pct">'+signo+pct.toFixed(1)+'%</span> vs blue · '+etiqueta;
+  }
+  $('cueva-offer').addEventListener('input', renderCueva);
+
+  $('cal-apply').addEventListener('click', function(){
+    if(!state.bolsa){ calMsg('Esperá a que carguen las cotizaciones.', false); return; }
+    var ars=num($('cal-ars').value), usd=num($('cal-usd').value);
+    var mep=mepRefFrom(state.bolsa);
+    var k=deriveK(ars, usd, mep);
+    if(!valid(k)||k<=0){ calMsg('Revisá los montos: pesos y dólares mayores a cero.', false); return; }
+    if(k<0.5||k>1.5){ calMsg('Ese cobro da un factor fuera de rango ('+k.toFixed(3)+'). ¿Están bien los datos?', false); return; }
+    state.k=k; saveCalib(); render();
+    calMsg('Calibrado: 1 US$ ≈ $'+fmtRate(cardRateFrom(state.bolsa,k))+' con tu tarjeta.');
+  });
+
+  $('cal-com-apply').addEventListener('click', function(){
+    var k=commissionToK($('cal-com').value);
+    if(!valid(k)||k<=0){ calMsg('Ingresá una comisión válida (ej 3).', false); return; }
+    state.k=k; saveCalib(); render();
+    calMsg('Aplicada comisión: factor '+k.toFixed(3)+'.');
+  });
+
+  $('cal-reset').addEventListener('click', function(){
+    state.k=DEFAULT_CARD_K; saveCalib(); render();
+    $('cal-ars').value=''; $('cal-usd').value=''; $('cal-com').value='';
+    calMsg('Vuelto a la estimación por defecto (×'+DEFAULT_CARD_K+').');
+  });
+
+  /* ============================================================
+     REGISTRO DE GASTOS + EXPORT + GITHUB
+     ============================================================ */
+  function loadLog(){
+    var raw=store(true, LOG_KEY); if(!raw) return [];
+    try{ var l=JSON.parse(raw); return Array.isArray(l)?l:[]; }catch(e){ return []; }
+  }
+  function saveLog(l){ try{ store(false, LOG_KEY, JSON.stringify(l)); }catch(e){} }
+
+  function regMsg(id, txt, err){
+    var el=$(id); if(!el) return;
+    el.textContent=txt; el.classList.toggle('err', !!err);
+    if(txt){ setTimeout(function(){ if(el.textContent===txt) el.textContent=''; }, 4000); }
+  }
+
+  function registrar(tipo, metodo){
+    if(!state.blue||!state.bolsa){ regMsg(tipo==='cambio'?'reg-msg-cambio':'reg-msg-pago','esperá cotización', true); return; }
+    var r=currentRates();
+    var e=buildEntry({
+      tipo:tipo, metodo:metodo, amount:num($('amt').value),
+      cash:r.cash, card:r.card, mepRef:mepRefFrom(state.bolsa), k:state.k,
+      pen: valid(state.pen)?state.pen:null,
+      nota: $('log-nota') ? $('log-nota').value : ''
+    });
+    var msgId = tipo==='cambio' ? 'reg-msg-cambio' : 'reg-msg-pago';
+    if(!e){ regMsg(msgId,'ingresá un monto mayor a cero', true); return; }
+    var l=loadLog(); l.push(e); saveLog(l);
+    if($('log-nota')) $('log-nota').value='';
+    renderLog();
+    var eco = tipo==='cambio' ? 'US$ '+fmtUsd(e.usd)+' → $'+fmtArs(e.ars)
+            : '$'+fmtArs(e.ars)+' ('+e.metodo+') ≈ US$ '+fmtUsd(e.usd);
+    regMsg(msgId,'registrado: '+eco);
+  }
+
+  function liDate(ts){
+    var d=new Date(ts); if(isNaN(d.getTime())) return '¿?';
+    return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '
+         + ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  }
+
+  function renderLog(){
+    var l=loadLog();
+    var cnt=$('log-count'), tot=$('log-tot'), list=$('log-list');
+    if(cnt) cnt.textContent = l.length ? '· '+l.length : '';
+    if(!tot||!list) return;
+    if(!l.length){
+      tot.textContent='Sin movimientos todavía.';
+      list.innerHTML='<div class="log-empty">Registrá un pago o un cambio y aparece acá.</div>';
+      return;
+    }
+    var t=logTotals(l);
+    tot.innerHTML=t.pagos+' pago'+(t.pagos===1?'':'s')+' por <b>US$ '+fmtUsd(t.usdGastado)+'</b>'
+      + (valid(state.pen)?' (S/ '+fmtPen(usdToPen(t.usdGastado, state.pen))+')':'')
+      + ' · '+t.cambios+' cambio'+(t.cambios===1?'':'s')+' por <b>US$ '+fmtUsd(t.usdCambiado)+'</b>';
+    var html='';
+    var last=l.slice(-8).reverse();
+    for(var i=0;i<last.length;i++){
+      var e=last[i];
+      var who = e.tipo==='cambio'
+        ? 'cambio'
+        : 'pago <span class="'+(e.metodo==='tarjeta'?'m-ta':'m-ef')+'">'+e.metodo+'</span>';
+      var amt = e.tipo==='cambio'
+        ? 'US$ '+fmtUsd(e.usd)+' → $'+fmtArs(e.ars)
+        : '$'+fmtArs(e.ars)+' ≈ US$ '+fmtUsd(e.usd);
+      html+='<div class="li"><span class="who">'+liDate(e.ts)+' · '+who
+          + (e.nota?' <small>· '+String(e.nota).replace(/</g,'&lt;')+'</small>':'')
+          + '</span><span class="amt">'+amt+'</span></div>';
+    }
+    if(l.length>8) html+='<div class="log-empty">… y '+(l.length-8)+' más (todo va en el export).</div>';
+    list.innerHTML=html;
+  }
+
+  function stamp(d){
+    d=d||new Date();
+    function p(x){ return ('0'+x).slice(-2); }
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+  }
+  function logPayload(){
+    var l=loadLog();
+    return JSON.stringify({
+      app:'dolarbsas', exportado:new Date().toISOString(),
+      totales:logTotals(l), registros:l
+    }, null, 2);
+  }
+
+  $('reg-cambio').addEventListener('click', function(){ registrar('cambio', null); });
+  $('reg-ef').addEventListener('click', function(){ registrar('pago','efectivo'); });
+  $('reg-ta').addEventListener('click', function(){ registrar('pago','tarjeta'); });
+
+  $('log-export').addEventListener('click', function(){
+    var l=loadLog();
+    if(!l.length){ regMsg('log-msg','no hay nada que exportar', true); return; }
+    var blob=new Blob([logPayload()], {type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='gastos-bsas-'+stamp()+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    regMsg('log-msg','descargado: '+a.download);
+  });
+
+  $('log-undo').addEventListener('click', function(){
+    var l=loadLog();
+    if(!l.length){ regMsg('log-msg','no hay movimientos', true); return; }
+    l.pop(); saveLog(l); renderLog();
+    regMsg('log-msg','último movimiento borrado');
+  });
+
+  $('log-clear').addEventListener('click', function(){
+    var l=loadLog();
+    if(!l.length){ regMsg('log-msg','ya está vacío', true); return; }
+    if(!window.confirm('¿Vaciar los '+l.length+' movimientos? Esto no se puede deshacer.')) return;
+    saveLog([]); renderLog();
+    regMsg('log-msg','registro vaciado');
+  });
+
+  /* --- GitHub: snapshot del registro vía Contents API --- */
+  function loadGh(){
+    var raw=store(true, GH_KEY); if(!raw) return {};
+    try{ return JSON.parse(raw)||{}; }catch(e){ return {}; }
+  }
+  function saveGh(cfg){ try{ store(false, GH_KEY, JSON.stringify(cfg)); }catch(e){} }
+  function ghMsg(txt, err, html){
+    var el=$('gh-msg'); if(!el) return;
+    el.classList.toggle('err', !!err);
+    if(html) el.innerHTML=txt; else el.textContent=txt;
+  }
+  function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+
+  $('gh-send').addEventListener('click', function(){
+    var repo=$('gh-repo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/+$/,'');
+    var token=$('gh-token').value.trim();
+    var dir=($('gh-path').value.trim()||'gastos').replace(/^\/+|\/+$/g,'');
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ ghMsg('Repo inválido: usá el formato usuario/nombre.', true); return; }
+    if(!token){ ghMsg('Falta el token.', true); return; }
+    var l=loadLog();
+    if(!l.length){ ghMsg('No hay movimientos que enviar.', true); return; }
+    saveGh({repo:repo, path:dir, token:token});
+    var path=dir+'/registro-'+stamp()+'.json';
+    ghMsg('Enviando…');
+    fetch('https://api.github.com/repos/'+repo+'/contents/'+encodeURI(path), {
+      method:'PUT',
+      headers:{
+        'Authorization':'Bearer '+token,
+        'Accept':'application/vnd.github+json',
+        'Content-Type':'application/json',
+        'X-GitHub-Api-Version':'2022-11-28'
+      },
+      body: JSON.stringify({
+        message:'registro dolarbsas · '+l.length+' movimientos · '+stamp(),
+        content: b64utf8(logPayload())
+      })
+    })
+    .then(function(r){ return r.json().then(function(j){ return {status:r.status, j:j}; }); })
+    .then(function(res){
+      if(res.status===201 && res.j && res.j.content){
+        var url=res.j.content.html_url;
+        ghMsg('Subido ✓ <a href="'+url+'" target="_blank" rel="noopener">'+path+'</a>', false, true);
+      }else if(res.status===401){ ghMsg('Token rechazado (401). ¿Expiró o le falta permiso Contents?', true); }
+      else if(res.status===404){ ghMsg('Repo no encontrado (404): verificá usuario/nombre y que el token alcance a ese repo.', true); }
+      else if(res.status===422){ ghMsg('GitHub rechazó el archivo (422): ¿ya existe esa ruta?', true); }
+      else { ghMsg('Error '+res.status+': '+String(res.j && res.j.message || 'desconocido'), true); }
+    })
+    .catch(function(e){ ghMsg('Sin conexión con GitHub: '+String(e && e.message || e), true); });
+  });
+
+  /* --- init --- */
+  loadCalib();
+  var cached=loadCache();
+  if(cached && cached.blue && cached.bolsa){ state.blue=cached.blue; state.bolsa=cached.bolsa; state.offline=true; }
+  var pcache=loadPenCache();
+  if(pcache && valid(num(pcache.rate))){ state.pen=num(pcache.rate); state.penUpdated=pcache.updated||null; state.penOffline=true; }
+  var gh=loadGh();
+  if(gh.repo) $('gh-repo').value=gh.repo;
+  if(gh.path) $('gh-path').value=gh.path;
+  if(gh.token) $('gh-token').value=gh.token;
+  renderLog();
+  $('btn-cambio').setAttribute('aria-pressed', mode==='cambio'?'true':'false');
+  $('btn-pagar').setAttribute('aria-pressed', mode==='pagar'?'true':'false');
+  render();
+  fetchRates();
+  fetchPen();
+
+  /* --- PWA: offline real del shell --- */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>

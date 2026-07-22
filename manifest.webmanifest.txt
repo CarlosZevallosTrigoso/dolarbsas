@@ -1,0 +1,13 @@
+{
+  "name": "Dólares/Pesos · Buenos Aires",
+  "short_name": "dolarbsas",
+  "description": "Calculadora de cambio y pago en Buenos Aires: blue, MEP, tarjeta y soles.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
