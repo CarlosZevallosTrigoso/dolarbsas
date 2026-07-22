@@ -1,0 +1,6 @@
+codigo,fecha,hora,tipo,metodo,etiqueta,descripcion,ars,usd,pen,blue,lat,lon
+20260722-01,2026-07-22,14:33,pago,efectivo,comida,Desayuno en La Poesía,21600,14.07,47.80,1535,,
+20260722-02,2026-07-22,14:33,pago,efectivo,propina,Propina del desayuno (La Poesía),2400,1.56,5.30,1535,,
+20260722-03,2026-07-22,15:53,pago,efectivo,farmacia,Compras en Farmacity,5500,3.58,12.16,1535,,
+20260722-04,2026-07-22,19:22,pago,efectivo,comida,"La Choripanería, San Telmo",37600,24.50,83.23,1535,,
+20260722-05,2026-07-22,19:22,pago,efectivo,propina,Propina del choripán (La Choripanería),2000,1.30,4.42,1535,,
