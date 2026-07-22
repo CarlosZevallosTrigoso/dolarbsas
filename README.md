@@ -8,7 +8,7 @@ Calculadora de pesos y dólares para moverse por Buenos Aires, pensada desde Lim
 
 **Pagar algo** (modo por defecto): dado un precio en pesos, compara cuánto cuesta en dólares pagando en efectivo (valuado al blue compra) contra tarjeta extranjera (MEP mid × factor calibrable) y marca cuál conviene hoy, con el equivalente en soles debajo de cada cifra.
 
-**Cambiar dólares**: cuántos pesos entrega una cueva por tus dólares (blue compra) y cuánto valen esos dólares en soles a mercado. Incluye un verificador de ofertas: pegás la cotización que te ofrecen y te dice si es buena, aceptable o si te están clavando.
+**Cambiar dólares**: cuántos pesos entrega una cueva por tus dólares (blue compra) y cuánto valen esos dólares en soles a mercado. Incluye un verificador de ofertas: pegás la cotización que te ofrecen y te dice si es buena, aceptable o si te están clavando. Y si ya cambiaste, metés los dólares que entregaste y los pesos que recibiste para saber a cuánto te cotizaron de verdad (pesos ÷ dólares), con la misma comparación contra el blue.
 
 **Calibrar tarjeta** (pantalla ancha): la línea de tarjeta parte de una estimación (MEP × 0.97). Con un consumo real —o la comisión conocida del banco— se ajusta el factor y queda guardado en el navegador.
 
@@ -55,7 +55,7 @@ Cada entrada congela las tasas del momento, así el JSON sirve como fuente para 
 
 - `index.html` — interfaz y capa de red/estado.
 - `core.js` — lógica pura (tasas, conversiones, comparación, frescura, registro). Sin DOM ni red.
-- `test.js` — suite del núcleo: `node test.js` (64 aserciones).
+- `test.js` — suite del núcleo: `node test.js` (69 aserciones).
 - `sw.js` — service worker: el shell funciona offline e instalable como PWA; las cotizaciones degradan a la caché local (localStorage) cuando no hay red.
 - `manifest.webmanifest`, `icon.svg` — instalación en el teléfono.
 
