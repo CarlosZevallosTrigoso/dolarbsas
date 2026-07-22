@@ -42,20 +42,22 @@ Cada envío crea un archivo nuevo (el timestamp evita colisiones), así que el h
   "tipo": "pago",
   "metodo": "tarjeta",
   "nota": "cena en Chacarita",
+  "etiqueta": "comida",
   "ars": 145000,
   "usd": 100.32,
   "pen": 356.14,
-  "tasas": { "blueCompra": 1450, "mepRef": 1490, "k": 0.97, "tarjeta": 1445.3, "pen": 3.55 }
+  "tasas": { "blueCompra": 1450, "mepRef": 1490, "k": 0.97, "tarjeta": 1445.3, "pen": 3.55 },
+  "coords": { "lat": -34.6037, "lon": -58.3816, "acc": 13 }
 }
 ```
 
-Cada entrada congela las tasas del momento, así el JSON sirve como fuente para cualquier análisis posterior sin depender de históricos externos.
+Cada entrada congela las tasas del momento, así el JSON sirve como fuente para cualquier análisis posterior sin depender de históricos externos. Al registrar un pago se puede elegir una **etiqueta** (comida, transporte, alojamiento, compras u otra propia) y, si el navegador lo permite, se guardan las **coordenadas** del lugar (`lat`/`lon` y precisión `acc` en metros). Ambos campos son opcionales: quedan en `null` si no se completan o si se niega el permiso de ubicación.
 
 ## Archivos
 
 - `index.html` — interfaz y capa de red/estado.
 - `core.js` — lógica pura (tasas, conversiones, comparación, frescura, registro). Sin DOM ni red.
-- `test.js` — suite del núcleo: `node test.js` (69 aserciones).
+- `test.js` — suite del núcleo: `node test.js` (82 aserciones).
 - `sw.js` — service worker: el shell funciona offline e instalable como PWA; las cotizaciones degradan a la caché local (localStorage) cuando no hay red.
 - `manifest.webmanifest`, `icon.svg` — instalación en el teléfono.
 

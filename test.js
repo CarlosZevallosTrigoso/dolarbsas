@@ -94,6 +94,27 @@ eq(C.buildEntry(Object.assign({tipo:'pago',amount:0},base)),null,'monto cero rec
 eq(C.buildEntry(null),null,'opts null rechazado');
 var sinPen=C.buildEntry({tipo:'pago',metodo:'efectivo',amount:1000,cash:1450,card:1445,mepRef:1490,k:0.97,pen:null});
 eq(sinPen.pen,null,'sin PEN no rompe');
+
+/* --- etiqueta --- */
+eq(pago.etiqueta,null,'sin etiqueta = null');
+var etq=C.buildEntry(Object.assign({tipo:'pago',metodo:'efectivo',amount:1000,etiqueta:'  comida '},base));
+eq(etq.etiqueta,'comida','etiqueta recortada');
+var etqVacia=C.buildEntry(Object.assign({tipo:'pago',metodo:'efectivo',amount:1000,etiqueta:'   '},base));
+eq(etqVacia.etiqueta,null,'etiqueta en blanco = null');
+
+/* --- coordenadas --- */
+eq(pago.coords,null,'sin coords = null');
+var geo=C.buildEntry(Object.assign({tipo:'pago',metodo:'efectivo',amount:1000,coords:{lat:-34.6037,lon:-58.3816,acc:12.7}},base));
+close(geo.coords.lat,-34.6037,1e-9,'coords lat');
+close(geo.coords.lon,-58.3816,1e-9,'coords lon');
+eq(geo.coords.acc,13,'coords acc redondeada');
+eq(C.sanitizeCoords({lat:91,lon:0}),null,'lat fuera de rango');
+eq(C.sanitizeCoords({lat:0,lon:181}),null,'lon fuera de rango');
+eq(C.sanitizeCoords({lat:'x',lon:0}),null,'lat no numérica');
+eq(C.sanitizeCoords(null),null,'coords null');
+var geoSinAcc=C.sanitizeCoords({lat:0,lon:0});
+eq(geoSinAcc.acc,undefined,'sin acc no agrega campo');
+eq(geoSinAcc.lat,0,'coords 0,0 válidas');
 var tot=C.logTotals([pago,cambio,pago]);
 eq(tot.pagos,2,'totales pagos');
 eq(tot.cambios,1,'totales cambios');

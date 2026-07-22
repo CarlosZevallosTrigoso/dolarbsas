@@ -230,6 +230,27 @@
   #reg-ta{border-top:3px solid var(--steel)}
   .reg-msg{font-size:10.5px; color:var(--musgo-deep); min-height:13px; margin-top:6px}
   .reg-msg.err{color:var(--warm-deep)}
+  /* etiqueta rápida del pago */
+  .etq{margin-top:12px}
+  .etq-lab{font-size:10.5px; color:var(--ink-dim); margin-bottom:6px}
+  .etq-chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+  .etq-chip{
+    appearance:none; font-family:var(--mono); font-size:11px; letter-spacing:.03em;
+    padding:6px 11px; border-radius:3px; cursor:pointer;
+    border:1px solid var(--line); background:var(--bg); color:var(--ink-dim);
+  }
+  .etq-chip:hover{background:var(--ink); color:#fff}
+  .etq-chip.on{background:var(--ink); color:#fff; font-weight:600}
+  .etq-input{
+    width:100%; border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:13px; padding:8px 10px;
+  }
+  .etq-input:focus{outline:0; border-color:var(--steel)}
+  .log-list .li .who .li-etq{
+    display:inline-block; border:1px solid var(--line); border-radius:3px;
+    padding:0 5px; margin-left:4px; font-size:10px; color:var(--ink); font-weight:600;
+  }
+  .log-list .li .who .li-geo{text-decoration:none; margin-left:4px}
   details.registro .inner{padding-top:10px}
   .log-nota-row{display:flex; flex-direction:column; gap:5px; margin-bottom:12px}
   .log-nota-row span{font-size:10.5px; color:var(--ink-dim)}
@@ -370,6 +391,17 @@
       </div>
     </div>
     <div id="verdict" class="muted"><span class="lead">—</span><span class="body">Esperando cotizaciones.</span></div>
+    <div class="etq" id="etq">
+      <div class="etq-lab">Etiqueta del pago (opcional)</div>
+      <div class="etq-chips" id="etq-chips">
+        <button type="button" class="etq-chip" data-etq="comida">comida</button>
+        <button type="button" class="etq-chip" data-etq="transporte">transporte</button>
+        <button type="button" class="etq-chip" data-etq="alojamiento">alojamiento</button>
+        <button type="button" class="etq-chip" data-etq="compras">compras</button>
+        <button type="button" class="etq-chip" data-etq="otros">otros</button>
+      </div>
+      <input id="etq-input" class="etq-input" type="text" autocomplete="off" placeholder="o escribí tu propia etiqueta">
+    </div>
     <div class="reg-row">
       <button id="reg-ef" type="button" class="btn">pagué en efectivo</button>
       <button id="reg-ta" type="button" class="btn">pagué con tarjeta</button>
@@ -845,23 +877,64 @@
     if(txt){ setTimeout(function(){ if(el.textContent===txt) el.textContent=''; }, 4000); }
   }
 
+  // etiqueta del pago: la verdad vive en el input; las chips lo rellenan
+  function currentEtiqueta(){ var i=$('etq-input'); return i ? i.value : ''; }
+  function clearEtiqueta(){
+    var i=$('etq-input'); if(i) i.value='';
+    var chips=document.querySelectorAll('.etq-chip');
+    for(var j=0;j<chips.length;j++) chips[j].classList.remove('on');
+  }
+  function syncChips(){
+    var val=(currentEtiqueta()||'').trim().toLowerCase();
+    var chips=document.querySelectorAll('.etq-chip');
+    for(var j=0;j<chips.length;j++){
+      chips[j].classList.toggle('on', chips[j].getAttribute('data-etq')===val);
+    }
+  }
+
+  // ubicación: mejor esfuerzo, nunca bloquea el registro
+  function getCoords(cb){
+    if(!navigator.geolocation){ cb(null); return; }
+    var done=false;
+    function finish(c){ if(done) return; done=true; cb(c); }
+    try{
+      navigator.geolocation.getCurrentPosition(
+        function(pos){ finish({lat:pos.coords.latitude, lon:pos.coords.longitude, acc:pos.coords.accuracy}); },
+        function(){ finish(null); },
+        {enableHighAccuracy:true, timeout:8000, maximumAge:60000}
+      );
+    }catch(e){ finish(null); }
+  }
+
+  var regBusy=false;
   function registrar(tipo, metodo){
-    if(!state.blue||!state.bolsa){ regMsg(tipo==='cambio'?'reg-msg-cambio':'reg-msg-pago','esperá cotización', true); return; }
-    var r=currentRates();
-    var e=buildEntry({
-      tipo:tipo, metodo:metodo, amount:num($('amt').value),
-      cash:r.cash, card:r.card, mepRef:mepRefFrom(state.bolsa), k:state.k,
-      pen: valid(state.pen)?state.pen:null,
-      nota: $('log-nota') ? $('log-nota').value : ''
-    });
     var msgId = tipo==='cambio' ? 'reg-msg-cambio' : 'reg-msg-pago';
-    if(!e){ regMsg(msgId,'ingresá un monto mayor a cero', true); return; }
-    var l=loadLog(); l.push(e); saveLog(l);
-    if($('log-nota')) $('log-nota').value='';
-    renderLog();
-    var eco = tipo==='cambio' ? 'US$ '+fmtUsd(e.usd)+' → $'+fmtArs(e.ars)
-            : '$'+fmtArs(e.ars)+' ('+e.metodo+') ≈ US$ '+fmtUsd(e.usd);
-    regMsg(msgId,'registrado: '+eco);
+    if(regBusy) return;
+    if(!state.blue||!state.bolsa){ regMsg(msgId,'esperá cotización', true); return; }
+    var amount=num($('amt').value);
+    if(!valid(amount)||amount<=0){ regMsg(msgId,'ingresá un monto mayor a cero', true); return; }
+    var r=currentRates();
+    var etiqueta = tipo==='pago' ? currentEtiqueta() : '';
+    var nota = $('log-nota') ? $('log-nota').value : '';
+    regBusy=true;
+    regMsg(msgId,'ubicando…');
+    getCoords(function(coords){
+      var e=buildEntry({
+        tipo:tipo, metodo:metodo, amount:amount,
+        cash:r.cash, card:r.card, mepRef:mepRefFrom(state.bolsa), k:state.k,
+        pen: valid(state.pen)?state.pen:null,
+        nota: nota, etiqueta: etiqueta, coords: coords
+      });
+      regBusy=false;
+      if(!e){ regMsg(msgId,'ingresá un monto mayor a cero', true); return; }
+      var l=loadLog(); l.push(e); saveLog(l);
+      if(tipo==='pago') clearEtiqueta();
+      if($('log-nota')) $('log-nota').value='';
+      renderLog();
+      var eco = tipo==='cambio' ? 'US$ '+fmtUsd(e.usd)+' → $'+fmtArs(e.ars)
+              : '$'+fmtArs(e.ars)+' ('+e.metodo+') ≈ US$ '+fmtUsd(e.usd);
+      regMsg(msgId,'registrado'+(e.coords?' 📍':'')+': '+eco);
+    });
   }
 
   function liDate(ts){
@@ -894,8 +967,14 @@
       var amt = e.tipo==='cambio'
         ? 'US$ '+fmtUsd(e.usd)+' → $'+fmtArs(e.ars)
         : '$'+fmtArs(e.ars)+' ≈ US$ '+fmtUsd(e.usd);
+      var etqHtml = e.etiqueta ? ' <span class="li-etq">'+String(e.etiqueta).replace(/</g,'&lt;')+'</span>' : '';
+      var geoHtml = (e.coords && valid(e.coords.lat) && valid(e.coords.lon))
+        ? ' <a class="li-geo" href="https://maps.google.com/?q='+e.coords.lat+','+e.coords.lon+'" target="_blank" rel="noopener" title="ver en el mapa">📍</a>'
+        : '';
       html+='<div class="li"><span class="who">'+liDate(e.ts)+' · '+who
+          + etqHtml
           + (e.nota?' <small>· '+String(e.nota).replace(/</g,'&lt;')+'</small>':'')
+          + geoHtml
           + '</span><span class="amt">'+amt+'</span></div>';
     }
     if(l.length>8) html+='<div class="log-empty">… y '+(l.length-8)+' más (todo va en el export).</div>';
@@ -918,6 +997,20 @@
   $('reg-cambio').addEventListener('click', function(){ registrar('cambio', null); });
   $('reg-ef').addEventListener('click', function(){ registrar('pago','efectivo'); });
   $('reg-ta').addEventListener('click', function(){ registrar('pago','tarjeta'); });
+
+  // chips de etiqueta: rellenan el input; volver a tocar la activa la limpia
+  var etqChips=$('etq-chips');
+  if(etqChips){
+    etqChips.addEventListener('click', function(ev){
+      var b=ev.target.closest ? ev.target.closest('.etq-chip') : null;
+      if(!b) return;
+      var tag=b.getAttribute('data-etq');
+      var i=$('etq-input');
+      if(i){ i.value = (i.value.trim().toLowerCase()===tag) ? '' : tag; }
+      syncChips();
+    });
+  }
+  if($('etq-input')) $('etq-input').addEventListener('input', syncChips);
 
   $('log-export').addEventListener('click', function(){
     var l=loadLog();

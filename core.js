@@ -90,8 +90,17 @@ function fmtRate(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('e
 function fmtPen(n){ if(!valid(n)) return '—'; return new Intl.NumberFormat('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n); }
 
 /* --- registro de gastos: constructor puro de entradas --- */
+function sanitizeCoords(c){
+  if(!c||typeof c!=='object') return null;
+  var lat=num(c.lat), lon=num(c.lon);
+  if(!valid(lat)||!valid(lon)||lat<-90||lat>90||lon<-180||lon>180) return null;
+  var o={ lat: Math.round(lat*1e6)/1e6, lon: Math.round(lon*1e6)/1e6 };
+  var acc=num(c.acc);
+  if(valid(acc)&&acc>=0) o.acc=Math.round(acc);
+  return o;
+}
 function buildEntry(opts){
-  // opts: {tipo:'cambio'|'pago', metodo, amount, cash, card, mepRef, k, pen, nota, ts}
+  // opts: {tipo:'cambio'|'pago', metodo, amount, cash, card, mepRef, k, pen, nota, etiqueta, coords, ts}
   if(!opts||typeof opts!=='object') return null;
   var amount=num(opts.amount);
   if(!valid(amount)||amount<=0) return null;
@@ -101,6 +110,7 @@ function buildEntry(opts){
     tipo: tipo,
     metodo: tipo==='pago' ? (opts.metodo==='tarjeta'?'tarjeta':'efectivo') : null,
     nota: (typeof opts.nota==='string' && opts.nota.trim()!=='') ? opts.nota.trim() : null,
+    etiqueta: (typeof opts.etiqueta==='string' && opts.etiqueta.trim()!=='') ? opts.etiqueta.trim() : null,
     tasas: {
       blueCompra: valid(num(opts.cash))?num(opts.cash):null,
       mepRef: valid(num(opts.mepRef))?num(opts.mepRef):null,
@@ -122,6 +132,7 @@ function buildEntry(opts){
   if(valid(num(opts.pen)) && valid(num(e.usd))){
     e.pen=Math.round(usdToPen(e.usd, opts.pen)*100)/100;
   }else{ e.pen=null; }
+  e.coords=sanitizeCoords(opts.coords);
   return e;
 }
 
@@ -149,6 +160,6 @@ if(typeof module!=='undefined' && module.exports){
     usdToPen:usdToPen, penRateFrom:penRateFrom,
     rateFromExchange:rateFromExchange, cuevaPct:cuevaPct, cuevaNivel:cuevaNivel,
     num:num, valid:valid,
-    buildEntry:buildEntry, logTotals:logTotals
+    sanitizeCoords:sanitizeCoords, buildEntry:buildEntry, logTotals:logTotals
   };
 }
