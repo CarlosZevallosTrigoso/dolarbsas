@@ -1,10 +1,10 @@
 {
   "app": "dolarbsas",
-  "exportado": "2026-07-22T17:34:50.449Z",
+  "exportado": "2026-07-22T18:53:20.711Z",
   "totales": {
-    "pagos": 2,
+    "pagos": 3,
     "cambios": 0,
-    "usdGastado": 15.63,
+    "usdGastado": 19.21,
     "usdCambiado": 0
   },
   "registros": [
@@ -39,6 +39,22 @@
       "ars": 2400,
       "usd": 1.56,
       "pen": 5.3
+    },
+    {
+      "ts": "2026-07-22T18:53:10.947Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "tasas": {
+        "blueCompra": 1535,
+        "mepRef": 1514.65,
+        "k": 0.97,
+        "tarjeta": 1469.2105000000001,
+        "pen": 3.397041
+      },
+      "ars": 5500,
+      "usd": 3.58,
+      "pen": 12.16
     }
   ]
 }
