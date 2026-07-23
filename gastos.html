@@ -74,7 +74,7 @@
     <h1>Registro de gastos</h1>
     <a class="back" href="index.html">← regresar</a>
   </header>
-  <p class="intro">Todos los movimientos guardados en este navegador. Cada cifra congela las tasas del momento; la suma final va en pesos, dólares y soles.</p>
+  <p class="intro">El registro completo del repositorio más lo que tengas en este dispositivo, unido sin duplicar. Cada cifra congela las tasas del momento; la suma final va en pesos, dólares y soles.</p>
 
   <div id="content"></div>
 
@@ -164,19 +164,34 @@
     content.innerHTML=html;
   }
 
-  function load(){
-    var raw=null;
-    try{ raw=localStorage.getItem(LOG_KEY); }catch(e){}
-    if(raw){
-      try{ var arr=JSON.parse(raw); if(Array.isArray(arr) && arr.length){ render(arr); return; } }catch(e){}
+  function mergeByTs(){
+    var seen={}, out=[];
+    for(var a=0;a<arguments.length;a++){
+      var list=arguments[a]; if(!Array.isArray(list)) continue;
+      for(var i=0;i<list.length;i++){
+        var e=list[i]; if(!e) continue;
+        var key=e.ts ? String(e.ts) : JSON.stringify(e);
+        if(!seen[key]){ seen[key]=1; out.push(e); }
+      }
     }
-    // respaldo: registro versionado en el repo
+    return out;
+  }
+  function localLog(){
+    try{ var raw=localStorage.getItem(LOG_KEY); if(raw){ var a=JSON.parse(raw); if(Array.isArray(a)) return a; } }catch(e){}
+    return [];
+  }
+  function load(){
+    var local=localLog();
+    // fuente principal: historial versionado del repo; se le une lo de este dispositivo
     if(typeof fetch==='function'){
       fetch('gastos/gastos.json', {cache:'no-store'})
         .then(function(r){ return r.ok ? r.json() : null; })
-        .then(function(j){ render(j && Array.isArray(j.registros) ? j.registros : []); })
-        .catch(function(){ render([]); });
-    }else{ render([]); }
+        .then(function(j){
+          var repo=(j && Array.isArray(j.registros)) ? j.registros : [];
+          render(mergeByTs(repo, local)); // repo primero: gana ante empate de ts
+        })
+        .catch(function(){ render(local); }); // sin red: al menos lo de este dispositivo
+    }else{ render(local); }
   }
 
   load();
