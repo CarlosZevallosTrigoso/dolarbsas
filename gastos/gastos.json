@@ -1,10 +1,10 @@
 {
   "app": "dolarbsas",
-  "exportado": "2026-07-23T18:19:29.397Z",
+  "exportado": "2026-07-23T19:02:10.648Z",
   "totales": {
-    "pagos": 7,
+    "pagos": 8,
     "cambios": 0,
-    "usdGastado": 78.42,
+    "usdGastado": 94.26,
     "usdCambiado": 0
   },
   "registros": [
@@ -130,6 +130,28 @@
         "lat": -34.564484,
         "lon": -58.418842,
         "acc": 27
+      }
+    },
+    {
+      "ts": "2026-07-23T19:02:00.883Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": "Farmacity",
+      "tasas": {
+        "blueCompra": 1540,
+        "mepRef": 1518.6,
+        "k": 0.97,
+        "tarjeta": 1473.042,
+        "pen": 3.40109
+      },
+      "ars": 24400,
+      "usd": 15.84,
+      "pen": 53.87,
+      "coords": {
+        "lat": -34.572557,
+        "lon": -58.430205,
+        "acc": 32
       }
     }
   ]
