@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Registro de gastos · Buenos Aires</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff; --paper:#ffffff; --ink:#000000; --ink-dim:#555555; --line:#000000;
+    --musgo:#00ff00; --musgo-deep:#000000; --steel:#0000ff; --steel-deep:#0000ff;
+    --warm:#ff0000; --warm-deep:#ff0000;
+    --mono:'Fira Code', ui-monospace, "SF Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:13px; line-height:1.5;
+    -webkit-font-smoothing:antialiased; padding:20px 16px 48px;
+  }
+  .wrap{max-width:720px; margin:0 auto}
+
+  header.top{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:4px}
+  header.top h1{margin:0; font-size:15px; font-weight:700; letter-spacing:.12em}
+  header.top .sub{color:var(--ink-dim); font-size:11px}
+  .back{
+    text-decoration:none; font-family:var(--mono); font-size:12px; letter-spacing:.03em;
+    padding:8px 12px; border:1px solid var(--line); border-radius:3px; color:var(--ink); background:var(--bg);
+  }
+  .back:hover{background:var(--ink); color:#fff}
+
+  .intro{color:var(--ink-dim); font-size:11px; margin:12px 0 20px; line-height:1.55}
+
+  .day{margin:22px 0 8px; display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    border-bottom:1px solid var(--line); padding-bottom:6px}
+  .day .d{font-size:12px; font-weight:700; letter-spacing:.04em}
+  .day .dsum{font-size:11px; color:var(--ink-dim); font-variant-numeric:tabular-nums}
+
+  .g-list{border:1px solid var(--line); border-radius:3px}
+  .g{display:flex; justify-content:space-between; gap:12px; padding:10px 12px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+  .g:last-child{border-bottom:0}
+  .g .who{min-width:0}
+  .g .who .top{color:var(--ink)}
+  .g .who .m-ef{color:var(--musgo-deep); font-weight:700}
+  .g .who .m-ta{color:var(--steel-deep); font-weight:700}
+  .g .who .cam{color:var(--steel-deep); font-weight:700}
+  .g .etq{display:inline-block; border:1px solid var(--line); border-radius:3px; padding:0 5px; margin-left:2px; font-size:10px; font-weight:600}
+  .g .who small{color:var(--ink-dim)}
+  .g .geo{text-decoration:none; margin-left:4px}
+  .g .amt{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .g .amt .ars{font-weight:700; font-size:14px}
+  .g .amt .sub{color:var(--ink-dim); font-size:10.5px}
+
+  .totals{margin-top:26px; border:1px solid var(--line); border-radius:3px; border-top:3px solid var(--musgo); padding:14px 12px}
+  .totals .cap{font-size:10.5px; color:var(--ink-dim); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px}
+  .totals .row{display:flex; gap:10px; flex-wrap:wrap}
+  .totals .t{flex:1; min-width:120px; border:1px solid var(--line); border-radius:3px; padding:10px}
+  .totals .t .lab{font-size:10px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.06em}
+  .totals .t .val{font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; margin-top:3px}
+  .totals .note{font-size:10.5px; color:var(--ink-dim); margin:10px 0 0}
+
+  .empty{border:1px solid var(--line); border-radius:3px; padding:24px 12px; text-align:center; color:var(--ink-dim); font-size:12px}
+  .foot{margin-top:28px; color:var(--ink-dim); font-size:10.5px; line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Registro de gastos</h1>
+    <a class="back" href="index.html">← regresar</a>
+  </header>
+  <p class="intro">Todos los movimientos guardados en este navegador. Cada cifra congela las tasas del momento; la suma final va en pesos, dólares y soles.</p>
+
+  <div id="content"></div>
+
+  <p class="foot">Se lee todo desde tu navegador. Para respaldar o analizar, exportá el registro como JSON desde la app.</p>
+</div>
+
+<script src="core.js"></script>
+<script>
+(function(){
+  'use strict';
+  var LOG_KEY='cambista.log.v1';
+  var content=document.getElementById('content');
+
+  function baParts(ts){
+    var d=new Date(ts);
+    if(isNaN(d.getTime())) return {date:'—', time:'—'};
+    var tz={timeZone:'America/Argentina/Buenos_Aires'};
+    var date=d.toLocaleDateString('es-AR', Object.assign({day:'2-digit',month:'2-digit',year:'numeric'}, tz));
+    var time=d.toLocaleTimeString('es-AR', Object.assign({hour:'2-digit',minute:'2-digit',hour12:false}, tz));
+    return {date:date, time:time};
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function rowHtml(e){
+    var p=baParts(e.ts);
+    var who;
+    if(e.tipo==='cambio'){
+      who='<span class="cam">cambio</span>';
+    }else{
+      who='pago <span class="'+(e.metodo==='tarjeta'?'m-ta':'m-ef')+'">'+(e.metodo||'efectivo')+'</span>';
+    }
+    var etq = e.etiqueta ? ' <span class="etq">'+esc(e.etiqueta)+'</span>' : '';
+    var nota = e.nota ? ' <small>· '+esc(e.nota)+'</small>' : '';
+    var geo = (e.coords && valid(e.coords.lat) && valid(e.coords.lon))
+      ? ' <a class="geo" href="https://maps.google.com/?q='+e.coords.lat+','+e.coords.lon+'" target="_blank" rel="noopener" title="ver en el mapa">📍</a>'
+      : '';
+    var amtMain = e.tipo==='cambio'
+      ? '<span class="ars">US$ '+fmtUsd(e.usd)+'</span>'
+      : '<span class="ars">$ '+fmtArs(e.ars)+'</span>';
+    var amtSub = e.tipo==='cambio'
+      ? '→ $ '+fmtArs(e.ars)+(valid(e.pen)?' · S/ '+fmtPen(e.pen):'')
+      : 'US$ '+fmtUsd(e.usd)+(valid(e.pen)?' · S/ '+fmtPen(e.pen):'');
+    return '<div class="g"><span class="who"><span class="top">'+p.time+' · '+who+etq+nota+geo+'</span></span>'
+         + '<span class="amt">'+amtMain+'<br><span class="sub">'+amtSub+'</span></span></div>';
+  }
+
+  function render(list){
+    if(!Array.isArray(list) || !list.length){
+      content.innerHTML='<div class="empty">Todavía no hay gastos registrados.<br>Registrá un pago o un cambio en la app y aparecen acá.</div>';
+      return;
+    }
+    // orden cronológico ascendente
+    var arr=list.slice().sort(function(a,b){ return (Date.parse(a.ts)||0)-(Date.parse(b.ts)||0); });
+    // agrupar por día (hora de Buenos Aires)
+    var groups=[], byDate={};
+    for(var i=0;i<arr.length;i++){
+      var e=arr[i], d=baParts(e.ts).date;
+      if(!byDate[d]){ byDate[d]={date:d, items:[], ars:0}; groups.push(byDate[d]); }
+      byDate[d].items.push(e);
+      if(e.tipo!=='cambio' && valid(num(e.ars))) byDate[d].ars+=num(e.ars);
+    }
+    var tot={ars:0, usd:0, pen:0}, cambios=0;
+    var html='';
+    for(var g=0; g<groups.length; g++){
+      var grp=groups[g];
+      html+='<div class="day"><span class="d">'+grp.date+'</span><span class="dsum">$ '+fmtArs(grp.ars)+'</span></div>';
+      html+='<div class="g-list">';
+      for(var j=0;j<grp.items.length;j++){
+        var it=grp.items[j];
+        html+=rowHtml(it);
+        if(it.tipo==='cambio'){ cambios++; }
+        else{
+          if(valid(num(it.ars))) tot.ars+=num(it.ars);
+          if(valid(num(it.usd))) tot.usd+=num(it.usd);
+          if(valid(num(it.pen))) tot.pen+=num(it.pen);
+        }
+      }
+      html+='</div>';
+    }
+    html+='<div class="totals"><div class="cap">Total gastado</div><div class="row">'
+        + '<div class="t"><div class="lab">Pesos</div><div class="val">$ '+fmtArs(tot.ars)+'</div></div>'
+        + '<div class="t"><div class="lab">Dólares</div><div class="val">US$ '+fmtUsd(tot.usd)+'</div></div>'
+        + '<div class="t"><div class="lab">Soles</div><div class="val">S/ '+fmtPen(tot.pen)+'</div></div>'
+        + '</div>'
+        + (cambios ? '<p class="note">'+cambios+' cambio'+(cambios===1?'':'s')+' de dólares no se cuentan como gasto.</p>' : '')
+        + '</div>';
+    content.innerHTML=html;
+  }
+
+  function load(){
+    var raw=null;
+    try{ raw=localStorage.getItem(LOG_KEY); }catch(e){}
+    if(raw){
+      try{ var arr=JSON.parse(raw); if(Array.isArray(arr) && arr.length){ render(arr); return; } }catch(e){}
+    }
+    // respaldo: registro versionado en el repo
+    if(typeof fetch==='function'){
+      fetch('gastos/gastos.json', {cache:'no-store'})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){ render(j && Array.isArray(j.registros) ? j.registros : []); })
+        .catch(function(){ render([]); });
+    }else{ render([]); }
+  }
+
+  load();
+  // se actualiza al volver a la página o si otra pestaña registra un gasto
+  window.addEventListener('focus', load);
+  window.addEventListener('pageshow', load);
+  window.addEventListener('storage', function(ev){ if(!ev || ev.key===LOG_KEY || ev.key==null) load(); });
+})();
+</script>
+</body>
+</html>

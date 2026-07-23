@@ -4,8 +4,8 @@
    el fallback offline de cotizaciones ya lo maneja index.html
    vía localStorage. */
 'use strict';
-var CACHE='dolarbsas-v2';
-var ASSETS=['./','./index.html','./core.js','./manifest.webmanifest','./icon.svg'];
+var CACHE='dolarbsas-v3';
+var ASSETS=['./','./index.html','./gastos.html','./core.js','./manifest.webmanifest','./icon.svg'];
 
 self.addEventListener('install',function(e){
   e.waitUntil(

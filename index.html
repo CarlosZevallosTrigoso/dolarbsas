@@ -225,6 +225,14 @@
   .btn:focus-visible{outline:2px solid var(--steel); outline-offset:2px}
   .btn.primary{background:var(--steel); border-color:var(--steel); color:#fff}
   .btn.primary:hover{background:#000; border-color:#000}
+  .ver-gastos{
+    display:block; text-align:center; text-decoration:none;
+    margin:26px 0 6px; padding:14px; border:1px solid var(--line); border-radius:3px;
+    border-top:3px solid var(--musgo); background:var(--bg); color:var(--ink);
+    font-family:var(--mono); font-size:13px; font-weight:600; letter-spacing:.03em;
+  }
+  .ver-gastos:hover{background:var(--ink); color:#fff}
+  .ver-gastos:focus-visible{outline:2px solid var(--steel); outline-offset:2px}
   .reg-row{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center}
   #reg-ef{border-top:3px solid var(--musgo)}
   #reg-ta{border-top:3px solid var(--steel)}
@@ -503,6 +511,8 @@
       </div>
     </section>
   </div>
+
+  <a class="ver-gastos" href="gastos.html">📋 Ver registro de gastos</a>
 
   <footer class="foot">
     Cotizaciones ARS: DolarApi.com (fuentes públicas). USD/PEN: <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>.
