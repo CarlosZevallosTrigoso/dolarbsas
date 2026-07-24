@@ -1,0 +1,14 @@
+{
+  "app": "dolarbsas",
+  "actualizado": "2026-07-23T22:59:10.000Z",
+  "cambios": [
+    {
+      "n": 1,
+      "label": "1er cambio",
+      "usd": 250,
+      "ars": 378500,
+      "rate": 1514,
+      "fecha": null
+    }
+  ]
+}

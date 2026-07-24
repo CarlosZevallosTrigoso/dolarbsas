@@ -56,6 +56,19 @@
   .g .amt .ars{font-weight:700; font-size:14px}
   .g .amt .sub{color:var(--ink-dim); font-size:10.5px}
 
+  .caja{border:1px solid var(--line); border-radius:3px; border-top:3px solid var(--steel); padding:14px 12px; margin-bottom:22px}
+  .caja .cap{font-size:10.5px; color:var(--ink-dim); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px}
+  .caja .cr{display:flex; justify-content:space-between; gap:10px; padding:3px 0; font-variant-numeric:tabular-nums; font-size:12px}
+  .caja .cr .lab{color:var(--ink-dim)}
+  .caja .cr .lab b{color:var(--ink); font-weight:600}
+  .caja .cr .num{white-space:nowrap}
+  .caja .cr.gasto .num{color:var(--warm-deep)}
+  .caja .resto{display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+    border-top:1px solid var(--line); margin-top:8px; padding-top:10px}
+  .caja .resto .lab{font-size:12px; font-weight:700; letter-spacing:.04em}
+  .caja .resto .val{font-size:19px; font-weight:700; font-variant-numeric:tabular-nums}
+  .caja .resto .val small{font-size:11px; color:var(--ink-dim); font-weight:400}
+  .caja .resto.neg .val{color:var(--warm-deep)}
   .totals{margin-top:26px; border:1px solid var(--line); border-radius:3px; border-top:3px solid var(--musgo); padding:14px 12px}
   .totals .cap{font-size:10.5px; color:var(--ink-dim); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px}
   .totals .row{display:flex; gap:10px; flex-wrap:wrap}
@@ -121,9 +134,34 @@
          + '<span class="amt">'+amtMain+'<br><span class="sub">'+amtSub+'</span></span></div>';
   }
 
-  function render(list){
+  function cajaHtml(cambios, gastoEf){
+    if(!Array.isArray(cambios) || !cambios.length) return '';
+    var totARS=0, totUSD=0, rows='';
+    for(var i=0;i<cambios.length;i++){
+      var c=cambios[i], ars=num(c.ars), usd=num(c.usd);
+      if(valid(ars)) totARS+=ars;
+      if(valid(usd)) totUSD+=usd;
+      var rate=(valid(ars)&&valid(usd)&&usd>0)?ars/usd:num(c.rate);
+      rows+='<div class="cr"><span class="lab"><b>'+esc(c.label||('cambio '+(i+1)))+'</b>'
+          + (valid(usd)?' · US$ '+fmtUsd(usd):'')
+          + (valid(rate)?' <small>a $'+fmtRate(rate)+'</small>':'')
+          + '</span><span class="num">$ '+fmtArs(ars)+'</span></div>';
+    }
+    var resto=totARS-gastoEf;
+    var wRate=totUSD>0?totARS/totUSD:NaN;
+    var restoUsd=(valid(wRate)&&wRate>0)?resto/wRate:NaN;
+    return '<div class="caja"><div class="cap">Caja · efectivo</div>'
+         + rows
+         + '<div class="cr gasto"><span class="lab">gastado en efectivo</span><span class="num">−$ '+fmtArs(gastoEf)+'</span></div>'
+         + '<div class="resto'+(resto<0?' neg':'')+'"><span class="lab">Resto</span>'
+         + '<span class="val">$ '+fmtArs(resto)+(valid(restoUsd)?' <small>≈ US$ '+fmtUsd(restoUsd)+'</small>':'')+'</span></div>'
+         + '</div>';
+  }
+
+  function render(list, cambios){
     if(!Array.isArray(list) || !list.length){
-      content.innerHTML='<div class="empty">Todavía no hay gastos registrados.<br>Registrá un pago o un cambio en la app y aparecen acá.</div>';
+      content.innerHTML=cajaHtml(cambios, 0)
+        + '<div class="empty">Todavía no hay gastos registrados.<br>Registrá un pago o un cambio en la app y aparecen acá.</div>';
       return;
     }
     // orden cronológico ascendente
@@ -136,7 +174,7 @@
       byDate[d].items.push(e);
       if(e.tipo!=='cambio' && valid(num(e.ars))) byDate[d].ars+=num(e.ars);
     }
-    var tot={ars:0, usd:0, pen:0}, cambios=0;
+    var tot={ars:0, usd:0, pen:0}, camReg=0, gastoEf=0;
     var html='';
     for(var g=0; g<groups.length; g++){
       var grp=groups[g];
@@ -145,11 +183,12 @@
       for(var j=0;j<grp.items.length;j++){
         var it=grp.items[j];
         html+=rowHtml(it);
-        if(it.tipo==='cambio'){ cambios++; }
+        if(it.tipo==='cambio'){ camReg++; }
         else{
           if(valid(num(it.ars))) tot.ars+=num(it.ars);
           if(valid(num(it.usd))) tot.usd+=num(it.usd);
           if(valid(num(it.pen))) tot.pen+=num(it.pen);
+          if(it.metodo!=='tarjeta' && valid(num(it.ars))) gastoEf+=num(it.ars);
         }
       }
       html+='</div>';
@@ -159,9 +198,9 @@
         + '<div class="t"><div class="lab">Dólares</div><div class="val">US$ '+fmtUsd(tot.usd)+'</div></div>'
         + '<div class="t"><div class="lab">Soles</div><div class="val">S/ '+fmtPen(tot.pen)+'</div></div>'
         + '</div>'
-        + (cambios ? '<p class="note">'+cambios+' cambio'+(cambios===1?'':'s')+' de dólares no se cuentan como gasto.</p>' : '')
+        + (camReg ? '<p class="note">'+camReg+' cambio'+(camReg===1?'':'s')+' de dólares no se cuentan como gasto.</p>' : '')
         + '</div>';
-    content.innerHTML=html;
+    content.innerHTML=cajaHtml(cambios, gastoEf) + html;
   }
 
   function mergeByTs(){
@@ -182,16 +221,16 @@
   }
   function load(){
     var local=localLog();
-    // fuente principal: historial versionado del repo; se le une lo de este dispositivo
-    if(typeof fetch==='function'){
-      fetch('gastos/gastos.json', {cache:'no-store'})
-        .then(function(r){ return r.ok ? r.json() : null; })
-        .then(function(j){
-          var repo=(j && Array.isArray(j.registros)) ? j.registros : [];
-          render(mergeByTs(repo, local)); // repo primero: gana ante empate de ts
-        })
-        .catch(function(){ render(local); }); // sin red: al menos lo de este dispositivo
-    }else{ render(local); }
+    if(typeof fetch!=='function'){ render(local, []); return; }
+    // fuentes del repo: historial de gastos + registro de cambios; se une lo de este dispositivo
+    Promise.all([
+      fetch('gastos/gastos.json', {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
+      fetch('gastos/cambios.json', {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; })
+    ]).then(function(res){
+      var repo=(res[0] && Array.isArray(res[0].registros)) ? res[0].registros : [];
+      var cambios=(res[1] && Array.isArray(res[1].cambios)) ? res[1].cambios : [];
+      render(mergeByTs(repo, local), cambios); // repo primero: gana ante empate de ts
+    }).catch(function(){ render(local, []); });
   }
 
   load();
