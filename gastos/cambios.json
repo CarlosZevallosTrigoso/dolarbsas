@@ -1,6 +1,6 @@
 {
   "app": "dolarbsas",
-  "actualizado": "2026-07-23T22:59:10.000Z",
+  "actualizado": "2026-07-27T20:45:00.000Z",
   "cambios": [
     {
       "n": 1,
@@ -9,6 +9,14 @@
       "ars": 378500,
       "rate": 1514,
       "fecha": null
+    },
+    {
+      "n": 2,
+      "label": "2do cambio",
+      "usd": 100,
+      "ars": 152000,
+      "rate": 1520,
+      "fecha": "2026-07-27"
     }
   ]
 }
