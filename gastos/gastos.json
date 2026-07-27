@@ -1,10 +1,10 @@
 {
   "app": "dolarbsas",
-  "exportado": "2026-07-26T19:46:46.393Z",
+  "exportado": "2026-07-27T20:40:38.929Z",
   "totales": {
-    "pagos": 17,
+    "pagos": 18,
     "cambios": 0,
-    "usdGastado": 191.83,
+    "usdGastado": 210.66,
     "usdCambiado": 0
   },
   "registros": [
@@ -350,6 +350,28 @@
         "lat": -34.59016,
         "lon": -58.428408,
         "acc": 22
+      }
+    },
+    {
+      "ts": "2026-07-27T19:24:47.339Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": "comida",
+      "tasas": {
+        "blueCompra": 1540,
+        "mepRef": 1532.5500000000002,
+        "k": 0.97,
+        "tarjeta": 1486.5735000000002,
+        "pen": 3.404535
+      },
+      "ars": 29000,
+      "usd": 18.83,
+      "pen": 64.11,
+      "coords": {
+        "lat": -34.601945,
+        "lon": -58.388144,
+        "acc": 23
       }
     }
   ]
