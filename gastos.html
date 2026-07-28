@@ -134,8 +134,10 @@
          + '<span class="amt">'+amtMain+'<br><span class="sub">'+amtSub+'</span></span></div>';
   }
 
-  function cajaHtml(cambios, gastoEf){
-    if(!Array.isArray(cambios) || !cambios.length) return '';
+  function cajaHtml(cambios, gastoEf, ajustes){
+    cambios = Array.isArray(cambios) ? cambios : [];
+    ajustes = Array.isArray(ajustes) ? ajustes : [];
+    if(!cambios.length && !ajustes.length) return '';
     var totARS=0, totUSD=0, rows='';
     for(var i=0;i<cambios.length;i++){
       var c=cambios[i], ars=num(c.ars), usd=num(c.usd);
@@ -147,20 +149,31 @@
           + (valid(rate)?' <small>a $'+fmtRate(rate)+'</small>':'')
           + '</span><span class="num">$ '+fmtArs(ars)+'</span></div>';
     }
-    var resto=totARS-gastoEf;
+    var ajRows='', ajTot=0, hasCheckpoint=false;
+    for(var a=0;a<ajustes.length;a++){
+      var aj=ajustes[a], av=num(aj.ars);
+      if(!valid(av)) continue;
+      ajTot+=av;
+      if(valid(num(aj.saldoReal))) hasCheckpoint=true;
+      var etiq=aj.motivo?esc(aj.motivo):'ajuste';
+      ajRows+='<div class="cr gasto"><span class="lab">'+etiq+(aj.fecha?' <small>'+esc(aj.fecha)+'</small>':'')+'</span>'
+            + '<span class="num">'+(av<0?'−$ '+fmtArs(-av):'+$ '+fmtArs(av))+'</span></div>';
+    }
+    var resto=totARS-gastoEf+ajTot;
     var wRate=totUSD>0?totARS/totUSD:NaN;
     var restoUsd=(valid(wRate)&&wRate>0)?resto/wRate:NaN;
     return '<div class="caja"><div class="cap">Caja · efectivo</div>'
          + rows
          + '<div class="cr gasto"><span class="lab">gastado en efectivo</span><span class="num">−$ '+fmtArs(gastoEf)+'</span></div>'
-         + '<div class="resto'+(resto<0?' neg':'')+'"><span class="lab">Resto</span>'
+         + ajRows
+         + '<div class="resto'+(resto<0?' neg':'')+'"><span class="lab">Resto'+(hasCheckpoint?' <small>· conteo real</small>':'')+'</span>'
          + '<span class="val">$ '+fmtArs(resto)+(valid(restoUsd)?' <small>≈ US$ '+fmtUsd(restoUsd)+'</small>':'')+'</span></div>'
          + '</div>';
   }
 
-  function render(list, cambios){
+  function render(list, cambios, ajustes){
     if(!Array.isArray(list) || !list.length){
-      content.innerHTML=cajaHtml(cambios, 0)
+      content.innerHTML=cajaHtml(cambios, 0, ajustes)
         + '<div class="empty">Todavía no hay gastos registrados.<br>Registrá un pago o un cambio en la app y aparecen acá.</div>';
       return;
     }
@@ -200,7 +213,7 @@
         + '</div>'
         + (camReg ? '<p class="note">'+camReg+' cambio'+(camReg===1?'':'s')+' de dólares no se cuentan como gasto.</p>' : '')
         + '</div>';
-    content.innerHTML=cajaHtml(cambios, gastoEf) + html;
+    content.innerHTML=cajaHtml(cambios, gastoEf, ajustes) + html;
   }
 
   function mergeByTs(){
@@ -221,16 +234,18 @@
   }
   function load(){
     var local=localLog();
-    if(typeof fetch!=='function'){ render(local, []); return; }
+    if(typeof fetch!=='function'){ render(local, [], []); return; }
     // fuentes del repo: historial de gastos + registro de cambios; se une lo de este dispositivo
     Promise.all([
       fetch('gastos/gastos.json', {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
       fetch('gastos/cambios.json', {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; })
     ]).then(function(res){
       var repo=(res[0] && Array.isArray(res[0].registros)) ? res[0].registros : [];
-      var cambios=(res[1] && Array.isArray(res[1].cambios)) ? res[1].cambios : [];
-      render(mergeByTs(repo, local), cambios); // repo primero: gana ante empate de ts
-    }).catch(function(){ render(local, []); });
+      var cj=res[1] || {};
+      var cambios=Array.isArray(cj.cambios) ? cj.cambios : [];
+      var ajustes=Array.isArray(cj.ajustes) ? cj.ajustes : [];
+      render(mergeByTs(repo, local), cambios, ajustes); // repo primero: gana ante empate de ts
+    }).catch(function(){ render(local, [], []); });
   }
 
   load();

@@ -1,6 +1,6 @@
 {
   "app": "dolarbsas",
-  "actualizado": "2026-07-27T20:45:00.000Z",
+  "actualizado": "2026-07-28T23:00:00.000Z",
   "cambios": [
     {
       "n": 1,
@@ -17,6 +17,14 @@
       "ars": 152000,
       "rate": 1520,
       "fecha": "2026-07-27"
+    }
+  ],
+  "ajustes": [
+    {
+      "fecha": "2026-07-28",
+      "motivo": "conteo de caja: efectivo gastado sin registrar",
+      "saldoReal": 104300,
+      "ars": -43276
     }
   ]
 }
