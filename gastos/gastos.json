@@ -1,10 +1,10 @@
 {
   "app": "dolarbsas",
-  "exportado": "2026-07-27T20:40:38.929Z",
+  "exportado": "2026-07-28T22:46:15.653Z",
   "totales": {
-    "pagos": 18,
+    "pagos": 20,
     "cambios": 0,
-    "usdGastado": 210.66,
+    "usdGastado": 249.37,
     "usdCambiado": 0
   },
   "registros": [
@@ -372,6 +372,50 @@
         "lat": -34.601945,
         "lon": -58.388144,
         "acc": 23
+      }
+    },
+    {
+      "ts": "2026-07-28T22:44:59.292Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": "comida",
+      "tasas": {
+        "blueCompra": 1550,
+        "mepRef": 1530.9,
+        "k": 0.97,
+        "tarjeta": 1484.973,
+        "pen": 3.400358
+      },
+      "ars": 40000,
+      "usd": 25.81,
+      "pen": 87.76,
+      "coords": {
+        "lat": -34.588529,
+        "lon": -58.429857,
+        "acc": 16
+      }
+    },
+    {
+      "ts": "2026-07-28T22:45:52.252Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": "comida",
+      "tasas": {
+        "blueCompra": 1550,
+        "mepRef": 1530.9,
+        "k": 0.97,
+        "tarjeta": 1484.973,
+        "pen": 3.400358
+      },
+      "ars": 20000,
+      "usd": 12.9,
+      "pen": 43.86,
+      "coords": {
+        "lat": -34.588529,
+        "lon": -58.429857,
+        "acc": 16
       }
     }
   ]
