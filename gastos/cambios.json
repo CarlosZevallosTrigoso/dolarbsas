@@ -22,9 +22,9 @@
   "ajustes": [
     {
       "fecha": "2026-07-28",
-      "motivo": "conteo de caja: efectivo gastado sin registrar",
+      "motivo": "conteo de caja: efectivo sin registrar (resto tras cargar COTO)",
       "saldoReal": 104300,
-      "ars": -43276
+      "ars": -3276
     }
   ]
 }

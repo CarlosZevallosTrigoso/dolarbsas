@@ -1,3 +1,4 @@
 codigo,fecha,hora,tipo,metodo,etiqueta,descripcion,ars,usd,pen,blue,lat,lon
 20260724-01,2026-07-24,10:57,pago,efectivo,comida,,29500,19.28,65.54,1530,-34.570373,-58.42127
 20260724-02,2026-07-24,15:26,pago,efectivo,compras,,37724,24.74,84.10,1525,-34.567692,-58.435359
+20260724-03,2026-07-24,,pago,efectivo,compras,Compras en COTO,40000,26.23,89.17,1525,,

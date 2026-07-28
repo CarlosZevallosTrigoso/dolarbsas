@@ -2,9 +2,9 @@
   "app": "dolarbsas",
   "exportado": "2026-07-28T22:46:15.653Z",
   "totales": {
-    "pagos": 20,
+    "pagos": 21,
     "cambios": 0,
-    "usdGastado": 249.37,
+    "usdGastado": 275.6,
     "usdCambiado": 0
   },
   "registros": [
@@ -197,6 +197,23 @@
         "lon": -58.42127,
         "acc": 17
       }
+    },
+    {
+      "ts": "2026-07-24T15:00:00.000Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": "COTO · registrado manualmente (no estaba en la app); hora aproximada",
+      "etiqueta": "compras",
+      "tasas": {
+        "blueCompra": 1525,
+        "mepRef": null,
+        "k": null,
+        "tarjeta": null,
+        "pen": 3.399361
+      },
+      "ars": 40000,
+      "usd": 26.23,
+      "pen": 89.17
     },
     {
       "ts": "2026-07-24T18:26:59.442Z",
