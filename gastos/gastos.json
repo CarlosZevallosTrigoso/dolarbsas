@@ -2,9 +2,9 @@
   "app": "dolarbsas",
   "exportado": "2026-07-28T22:46:15.653Z",
   "totales": {
-    "pagos": 21,
+    "pagos": 25,
     "cambios": 0,
-    "usdGastado": 275.6,
+    "usdGastado": 351.99,
     "usdCambiado": 0
   },
   "registros": [
@@ -433,6 +433,94 @@
         "lat": -34.588529,
         "lon": -58.429857,
         "acc": 16
+      }
+    },
+    {
+      "ts": "2026-07-28T23:33:33.993Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": null,
+      "tasas": {
+        "blueCompra": 1550,
+        "mepRef": 1530.9,
+        "k": 0.97,
+        "tarjeta": 1484.973,
+        "pen": 3.400358
+      },
+      "ars": 13700,
+      "usd": 8.84,
+      "pen": 30.06,
+      "coords": {
+        "lat": -34.570145,
+        "lon": -58.432175,
+        "acc": 22
+      }
+    },
+    {
+      "ts": "2026-07-30T00:38:42.037Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": null,
+      "tasas": {
+        "blueCompra": 1550,
+        "mepRef": 1523.1999999999998,
+        "k": 0.97,
+        "tarjeta": 1477.5039999999997,
+        "pen": 3.399105
+      },
+      "ars": 45000,
+      "usd": 29.03,
+      "pen": 98.68,
+      "coords": {
+        "lat": -34.571597,
+        "lon": -58.433705,
+        "acc": 5
+      }
+    },
+    {
+      "ts": "2026-07-30T16:35:37.768Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": "comida",
+      "tasas": {
+        "blueCompra": 1545,
+        "mepRef": 1517.3,
+        "k": 0.97,
+        "tarjeta": 1471.781,
+        "pen": 3.399105
+      },
+      "ars": 45000,
+      "usd": 29.13,
+      "pen": 99.02,
+      "coords": {
+        "lat": -34.578983,
+        "lon": -58.432333,
+        "acc": 14
+      }
+    },
+    {
+      "ts": "2026-07-30T16:36:01.190Z",
+      "tipo": "pago",
+      "metodo": "efectivo",
+      "nota": null,
+      "etiqueta": "comida",
+      "tasas": {
+        "blueCompra": 1545,
+        "mepRef": 1517.3,
+        "k": 0.97,
+        "tarjeta": 1471.781,
+        "pen": 3.399105
+      },
+      "ars": 14500,
+      "usd": 9.39,
+      "pen": 31.92,
+      "coords": {
+        "lat": -34.578983,
+        "lon": -58.432333,
+        "acc": 14
       }
     }
   ]

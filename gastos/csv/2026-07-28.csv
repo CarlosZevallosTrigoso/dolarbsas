@@ -1,3 +1,4 @@
 codigo,fecha,hora,tipo,metodo,etiqueta,descripcion,ars,usd,pen,blue,lat,lon
 20260728-01,2026-07-28,19:44,pago,efectivo,comida,,40000,25.81,87.76,1550,-34.588529,-58.429857
 20260728-02,2026-07-28,19:45,pago,efectivo,comida,,20000,12.90,43.86,1550,-34.588529,-58.429857
+20260728-03,2026-07-28,20:33,pago,efectivo,,,13700,8.84,30.06,1550,-34.570145,-58.432175
