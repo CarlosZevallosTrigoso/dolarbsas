@@ -1,2 +1,4 @@
 codigo,fecha,hora,tipo,metodo,etiqueta,descripcion,ars,usd,pen,blue,lat,lon
 20260731-01,2026-07-31,00:25,pago,efectivo,comida,,55000,35.60,120.64,1545,-34.571597,-58.433705
+20260731-02,2026-07-31,14:52,pago,efectivo,comida,,15600,10.13,34.33,1540,-34.580452,-58.414865
+20260731-03,2026-07-31,17:31,pago,efectivo,comida,,15500,10.06,34.09,1540,-34.590012,-58.428157
