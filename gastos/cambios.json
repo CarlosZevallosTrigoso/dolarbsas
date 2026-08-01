@@ -1,6 +1,6 @@
 {
   "app": "dolarbsas",
-  "actualizado": "2026-07-28T23:00:00.000Z",
+  "actualizado": "2026-07-31T23:00:00.000Z",
   "cambios": [
     {
       "n": 1,
@@ -25,14 +25,22 @@
       "ars": 152000,
       "rate": 1520,
       "fecha": "2026-07-30"
+    },
+    {
+      "n": 4,
+      "label": "4to cambio",
+      "usd": 100,
+      "ars": 151000,
+      "rate": 1510,
+      "fecha": "2026-07-31"
     }
   ],
   "ajustes": [
     {
-      "fecha": "2026-07-28",
-      "motivo": "conteo de caja: efectivo sin registrar (resto tras cargar COTO)",
-      "saldoReal": 104300,
-      "ars": -3276
+      "fecha": "2026-07-31",
+      "motivo": "conteo de caja: re-ancla al efectivo real tras el 4to cambio",
+      "saldoReal": 212900,
+      "ars": 6624
     }
   ]
 }
